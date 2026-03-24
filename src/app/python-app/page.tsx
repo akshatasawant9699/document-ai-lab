@@ -11,7 +11,6 @@ const LLM_MODELS = [
 ];
 
 const API_VERSION = "v65.0";
-const REDIRECT_URI = "https://document-ai-lab.vercel.app/python-app";
 
 interface FieldResult {
   value: unknown;
@@ -81,7 +80,7 @@ export default function ExtractPage() {
       } catch { /* ignore */ }
     }
 
-    const savedAuth = sessionStorage.getItem("docai_auth");
+    const savedAuth = localStorage.getItem("docai_auth");
     if (savedAuth) {
       try {
         setAuth(JSON.parse(savedAuth));
@@ -91,42 +90,19 @@ export default function ExtractPage() {
   }, []);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("code");
-    if (code && !auth) {
-      setAuthLoading(true);
-      const verifier = sessionStorage.getItem("docai_pkce_verifier") || "";
-      const saved = localStorage.getItem("docai_login");
-      const cfg = saved ? JSON.parse(saved) : { loginUrl, clientId, clientSecret };
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === "docai_auth_success" && event.data.auth) {
+        setAuth(event.data.auth);
+        setAuthenticated(true);
+        setAuthLoading(false);
+        setError("");
+      }
+    };
 
-      fetch("/api/auth", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          code,
-          codeVerifier: verifier,
-          redirectUri: REDIRECT_URI,
-          loginUrl: cfg.loginUrl,
-          clientId: cfg.clientId,
-          clientSecret: cfg.clientSecret,
-        }),
-      })
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.access_token) {
-            const authData = { accessToken: data.access_token, instanceUrl: data.instance_url };
-            setAuth(authData);
-            setAuthenticated(true);
-            sessionStorage.setItem("docai_auth", JSON.stringify(authData));
-            window.history.replaceState({}, "", window.location.pathname);
-          } else {
-            setError(`Authentication failed: ${data.error}`);
-          }
-        })
-        .catch((e) => setError(`Auth error: ${e.message}`))
-        .finally(() => setAuthLoading(false));
-    }
-  }, [auth, loginUrl, clientId, clientSecret]);
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
 
   const startAuth = async () => {
     if (!loginUrl || !clientId) {
@@ -137,17 +113,47 @@ export default function ExtractPage() {
     localStorage.setItem("docai_login", JSON.stringify({ loginUrl, clientId, clientSecret, idpConfigName }));
 
     const { verifier, challenge } = await generatePKCE();
-    sessionStorage.setItem("docai_pkce_verifier", verifier);
+    localStorage.setItem("docai_pkce_verifier", verifier);
 
+    const redirectUri = window.location.origin + "/auth/callback";
     const authUrl =
       `${loginUrl}/services/oauth2/authorize` +
       `?response_type=code` +
       `&client_id=${encodeURIComponent(clientId)}` +
-      `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
       `&code_challenge=${challenge}` +
       `&code_challenge_method=S256`;
 
-    window.location.href = authUrl;
+    setAuthLoading(true);
+
+    const w = 600, h = 700;
+    const left = window.screenX + (window.outerWidth - w) / 2;
+    const top = window.screenY + (window.outerHeight - h) / 2;
+    const popup = window.open(
+      authUrl,
+      "salesforce_login",
+      `width=${w},height=${h},left=${left},top=${top},toolbar=no,menubar=no,location=yes`
+    );
+
+    if (!popup) {
+      setError("Popup blocked. Please allow popups for this site and try again.");
+      setAuthLoading(false);
+      return;
+    }
+
+    const pollTimer = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(pollTimer);
+        const savedAuth = localStorage.getItem("docai_auth");
+        if (savedAuth && !authenticated) {
+          try {
+            setAuth(JSON.parse(savedAuth));
+            setAuthenticated(true);
+          } catch { /* ignore */ }
+        }
+        setAuthLoading(false);
+      }
+    }, 500);
   };
 
   const handleFileChange = useCallback(async (f: File) => {
@@ -242,7 +248,7 @@ export default function ExtractPage() {
   const logout = () => {
     setAuth(null);
     setAuthenticated(false);
-    sessionStorage.removeItem("docai_auth");
+    localStorage.removeItem("docai_auth");
     setFile(null);
     setResults(null);
   };
@@ -267,15 +273,11 @@ export default function ExtractPage() {
       <div className="flex items-center gap-2 mb-8">
         {["Authenticate", "Extract"].map((label, i) => (
           <div key={label} className="flex items-center gap-2">
-            <div
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                (i === 0 && !authenticated) || (i === 1 && authenticated)
-                  ? "bg-[var(--sf-blue)] text-white"
-                  : authenticated
-                  ? "bg-green-100 text-green-800"
-                  : "bg-gray-100 text-gray-400"
-              }`}
-            >
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              (i === 0 && !authenticated) || (i === 1 && authenticated)
+                ? "bg-[var(--sf-blue)] text-white"
+                : authenticated ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-400"
+            }`}>
               <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                 i === 0 && authenticated ? "bg-green-500 text-white" : "bg-white/20"
               }`}>
@@ -322,7 +324,7 @@ export default function ExtractPage() {
               </div>
               <h2 className="text-xl font-semibold text-[var(--sf-navy)] mb-1">Login with Salesforce</h2>
               <p className="text-sm text-gray-500">
-                Connect to your Salesforce org to access Document AI.
+                Connect to your Salesforce org to access Document AI. A new window will open for Salesforce login.
               </p>
             </div>
 
@@ -382,26 +384,29 @@ export default function ExtractPage() {
 
               <div className="pt-2">
                 {authLoading ? (
-                  <div className="flex items-center justify-center gap-2 py-3 text-[var(--sf-blue)]">
+                  <div className="w-full px-6 py-3 bg-[var(--sf-blue)]/80 text-white font-semibold rounded-lg flex items-center justify-center gap-3">
                     <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
-                    <span className="text-sm font-medium">Completing authentication...</span>
+                    Waiting for Salesforce login...
                   </div>
                 ) : (
                   <button
                     onClick={startAuth}
                     disabled={!loginUrl || !clientId}
-                    className="w-full px-6 py-3 bg-[var(--sf-blue)] text-white font-semibold rounded-lg hover:bg-[var(--sf-blue-dark)] transition-colors shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-full px-6 py-3 bg-[var(--sf-blue)] text-white font-semibold rounded-lg hover:bg-[var(--sf-blue-dark)] transition-colors shadow-md disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
                     Login with Salesforce
                   </button>
                 )}
               </div>
 
               <p className="text-xs text-gray-400 text-center">
-                Credentials are saved locally in your browser and never sent to our servers.
+                Salesforce login opens in a new window. Credentials are saved locally in your browser.
               </p>
             </div>
           </div>
