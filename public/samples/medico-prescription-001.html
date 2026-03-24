@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Medical Prescription - Dr. James Wilson</title>
+<style>
+  body { font-family: 'Georgia', serif; max-width: 700px; margin: 0 auto; padding: 40px; color: #333; }
+  .rx-header { text-align: center; border-bottom: 2px solid #2e844a; padding-bottom: 15px; margin-bottom: 25px; }
+  .rx-header h1 { color: #2e844a; margin: 0; font-size: 22px; }
+  .rx-header .clinic-name { font-size: 18px; font-weight: bold; color: #032d60; margin-bottom: 5px; }
+  .rx-header .clinic-details { font-size: 12px; color: #666; }
+  .doctor-info { background: #f0f7f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; }
+  .patient-info { display: flex; justify-content: space-between; margin-bottom: 25px; padding: 15px; background: #fafafa; border-radius: 8px; }
+  .patient-info div { font-size: 13px; }
+  .patient-info strong { display: block; font-size: 11px; text-transform: uppercase; color: #999; margin-bottom: 3px; }
+  .rx-symbol { font-size: 48px; color: #2e844a; font-weight: bold; margin: 20px 0 10px; font-family: serif; }
+  .prescription-body { padding: 20px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 25px; }
+  .med-item { padding: 12px 0; border-bottom: 1px dashed #ddd; }
+  .med-item:last-child { border-bottom: none; }
+  .med-name { font-size: 16px; font-weight: bold; color: #032d60; }
+  .med-details { font-size: 13px; color: #555; margin-top: 4px; }
+  .signature-block { display: flex; justify-content: space-between; margin-top: 30px; padding-top: 20px; }
+  .sig-line { width: 200px; border-top: 1px solid #333; padding-top: 5px; font-size: 11px; color: #666; text-align: center; }
+  .footer-note { margin-top: 30px; padding: 10px; background: #fff8e6; border-radius: 5px; font-size: 11px; color: #856404; text-align: center; }
+</style>
+</head>
+<body>
+  <div class="rx-header">
+    <div class="clinic-name">Pacific Heights Medical Clinic</div>
+    <h1>PRESCRIPTION</h1>
+    <div class="clinic-details">
+      2100 Pacific Avenue, Suite 300, San Francisco, CA 94115<br>
+      Phone: (415) 555-0176 | Fax: (415) 555-0177<br>
+      NPI: 1234567890
+    </div>
+  </div>
+
+  <div class="doctor-info">
+    <strong>Prescribing Physician:</strong> Dr. James A. Wilson, M.D.<br>
+    <strong>Specialty:</strong> Internal Medicine | <strong>DEA #:</strong> AW1234563<br>
+    <strong>License #:</strong> CA-MD-2015-44892
+  </div>
+
+  <div class="patient-info">
+    <div>
+      <strong>Patient Name</strong>
+      Robert J. Martinez
+    </div>
+    <div>
+      <strong>Date of Birth</strong>
+      05/12/1978
+    </div>
+    <div>
+      <strong>Date</strong>
+      March 20, 2026
+    </div>
+    <div>
+      <strong>MRN</strong>
+      MRN-445291
+    </div>
+  </div>
+
+  <div class="rx-symbol">Rx</div>
+
+  <div class="prescription-body">
+    <div class="med-item">
+      <div class="med-name">1. Metformin HCl 500mg Tablets</div>
+      <div class="med-details">
+        Sig: Take one (1) tablet by mouth twice daily with meals<br>
+        Dispense: #60 (Sixty) | Refills: 3 (Three)<br>
+        NDC: 0093-7212-01
+      </div>
+    </div>
+    <div class="med-item">
+      <div class="med-name">2. Lisinopril 20mg Tablets</div>
+      <div class="med-details">
+        Sig: Take one (1) tablet by mouth once daily in the morning<br>
+        Dispense: #30 (Thirty) | Refills: 5 (Five)<br>
+        NDC: 0093-7340-98
+      </div>
+    </div>
+    <div class="med-item">
+      <div class="med-name">3. Atorvastatin 20mg Tablets</div>
+      <div class="med-details">
+        Sig: Take one (1) tablet by mouth once daily at bedtime<br>
+        Dispense: #30 (Thirty) | Refills: 5 (Five)<br>
+        NDC: 0093-5057-30
+      </div>
+    </div>
+  </div>
+
+  <p style="font-size: 13px;"><strong>Diagnosis:</strong> Type 2 Diabetes Mellitus (E11.9), Essential Hypertension (I10), Hyperlipidemia (E78.5)</p>
+  <p style="font-size: 13px;"><strong>Allergies:</strong> Penicillin, Sulfa drugs</p>
+  <p style="font-size: 13px;"><strong>Notes:</strong> Patient to follow up in 3 months. Monitor HbA1c and lipid panel. Blood pressure target &lt;130/80.</p>
+
+  <div class="signature-block">
+    <div>
+      <div class="sig-line">Dr. James A. Wilson, M.D.</div>
+      <div style="text-align: center; font-size: 11px; color: #999; margin-top: 2px;">Prescriber Signature</div>
+    </div>
+    <div>
+      <div class="sig-line">March 20, 2026</div>
+      <div style="text-align: center; font-size: 11px; color: #999; margin-top: 2px;">Date</div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    This prescription is valid for 12 months from the date of issue. Controlled substances are subject to DEA regulations.
+  </div>
+</body>
+</html>

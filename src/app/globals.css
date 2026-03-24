@@ -3,24 +3,86 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --sf-blue: #0176d3;
+  --sf-blue-dark: #014486;
+  --sf-navy: #032d60;
+  --sf-cloud: #eaf5fe;
+  --sf-success: #2e844a;
+  --sf-warning: #fe9339;
+  --sf-error: #ea001e;
+  --sf-purple: #9050e9;
+  --sf-teal: #0b827c;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-sf-blue: var(--sf-blue);
+  --color-sf-blue-dark: var(--sf-blue-dark);
+  --color-sf-navy: var(--sf-navy);
+  --color-sf-cloud: var(--sf-cloud);
+  --color-sf-success: var(--sf-success);
+  --color-sf-warning: var(--sf-warning);
+  --color-sf-error: var(--sf-error);
+  --color-sf-purple: var(--sf-purple);
+  --color-sf-teal: var(--sf-teal);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+pre {
+  overflow-x: auto;
+}
+
+pre code {
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.recipe-content h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--sf-navy);
+  border-bottom: 2px solid var(--sf-cloud);
+  padding-bottom: 0.5rem;
+}
+
+.recipe-content h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  color: var(--sf-blue-dark);
+}
+
+.recipe-content p {
+  margin-bottom: 1rem;
+  line-height: 1.75;
+}
+
+.recipe-content ul,
+.recipe-content ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.recipe-content li {
+  margin-bottom: 0.375rem;
+  line-height: 1.65;
+}
+
+.recipe-content ul {
+  list-style-type: disc;
+}
+
+.recipe-content ol {
+  list-style-type: decimal;
 }

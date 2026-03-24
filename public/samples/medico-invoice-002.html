@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Medico Pharma Invoice INV-2026-002</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; color: #333; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0176d3; padding-bottom: 20px; margin-bottom: 30px; }
+  .logo { font-size: 28px; font-weight: bold; color: #032d60; }
+  .logo-sub { font-size: 12px; color: #666; }
+  .invoice-title { text-align: right; }
+  .invoice-title h1 { font-size: 32px; color: #0176d3; margin: 0; }
+  .invoice-meta { font-size: 13px; color: #555; margin-top: 5px; }
+  .addresses { display: flex; justify-content: space-between; margin-bottom: 30px; }
+  .address-block { width: 45%; }
+  .address-block h3 { font-size: 11px; text-transform: uppercase; color: #999; margin-bottom: 8px; letter-spacing: 1px; }
+  .address-block p { margin: 2px 0; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+  thead th { background: #032d60; color: white; padding: 10px 12px; text-align: left; font-size: 12px; text-transform: uppercase; }
+  tbody td { padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 13px; }
+  tbody tr:nth-child(even) { background: #f9f9f9; }
+  .totals { text-align: right; margin-top: 20px; }
+  .totals table { width: 300px; margin-left: auto; }
+  .totals td { padding: 6px 12px; font-size: 13px; }
+  .totals .total-row { font-weight: bold; font-size: 16px; border-top: 2px solid #032d60; color: #032d60; }
+  .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 11px; color: #999; text-align: center; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="logo">Medico Pharmaceuticals</div>
+      <div class="logo-sub">Quality Healthcare Solutions Since 1998</div>
+      <div class="logo-sub">123 Pharma Boulevard, San Francisco, CA 94105</div>
+      <div class="logo-sub">Phone: (415) 555-0142 | Email: billing@medicopharma.com</div>
+      <div class="logo-sub">Tax ID: 94-3201567</div>
+    </div>
+    <div class="invoice-title">
+      <h1>INVOICE</h1>
+      <div class="invoice-meta">
+        <strong>Invoice #:</strong> INV-2026-002<br>
+        <strong>Date:</strong> March 18, 2026<br>
+        <strong>Due Date:</strong> April 17, 2026<br>
+        <strong>PO Number:</strong> PO-BAY-7732
+      </div>
+    </div>
+  </div>
+
+  <div class="addresses">
+    <div class="address-block">
+      <h3>Bill To</h3>
+      <p><strong>Bay Area Medical Center</strong></p>
+      <p>Accounts Payable Department</p>
+      <p>789 Medical Parkway</p>
+      <p>Oakland, CA 94612</p>
+      <p>Phone: (510) 555-0234</p>
+    </div>
+    <div class="address-block">
+      <h3>Ship To</h3>
+      <p><strong>Bay Area Medical Center - Warehouse</strong></p>
+      <p>789 Medical Parkway, Dock C</p>
+      <p>Oakland, CA 94612</p>
+      <p>Attn: Central Supply</p>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Item #</th>
+        <th>Description</th>
+        <th>NDC Code</th>
+        <th>Qty</th>
+        <th>Unit Price</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>Insulin Glargine 100U/mL Pens (5ct)</td>
+        <td>0169-3687-12</td>
+        <td>100</td>
+        <td>$142.50</td>
+        <td>$14,250.00</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Clopidogrel 75mg Tablets (30ct)</td>
+        <td>0093-7264-30</td>
+        <td>60</td>
+        <td>$8.90</td>
+        <td>$534.00</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>Amlodipine 5mg Tablets (90ct)</td>
+        <td>0093-3171-98</td>
+        <td>45</td>
+        <td>$11.20</td>
+        <td>$504.00</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Prednisone 10mg Tablets (100ct)</td>
+        <td>0093-8740-01</td>
+        <td>20</td>
+        <td>$6.75</td>
+        <td>$135.00</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>IV Saline Solution 0.9% 1000mL (24ct)</td>
+        <td>0338-0049-04</td>
+        <td>15</td>
+        <td>$48.00</td>
+        <td>$720.00</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <table>
+      <tr><td>Subtotal:</td><td>$16,143.00</td></tr>
+      <tr><td>Tax (9.25%):</td><td>$1,493.23</td></tr>
+      <tr><td>Shipping:</td><td>$125.00</td></tr>
+      <tr><td>Insurance Handling:</td><td>$75.00</td></tr>
+      <tr class="total-row"><td>Total Due:</td><td>$17,836.23</td></tr>
+    </table>
+  </div>
+
+  <div class="footer">
+    <p>Thank you for your business! | Medico Pharmaceuticals Inc. | www.medicopharma.com</p>
+    <p>Cold chain items shipped in validated thermal containers per FDA 21 CFR Part 211</p>
+  </div>
+</body>
+</html>

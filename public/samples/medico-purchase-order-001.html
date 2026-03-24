@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Purchase Order - PO-MED-4521</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; color: #333; }
+  .header { display: flex; justify-content: space-between; border-bottom: 3px solid #9050e9; padding-bottom: 20px; margin-bottom: 30px; }
+  .logo { font-size: 24px; font-weight: bold; color: #032d60; }
+  .logo-sub { font-size: 12px; color: #666; }
+  .po-title { text-align: right; }
+  .po-title h1 { color: #9050e9; margin: 0; font-size: 28px; }
+  .po-meta { font-size: 13px; color: #555; margin-top: 5px; }
+  .addresses { display: flex; justify-content: space-between; margin-bottom: 25px; }
+  .addr { width: 45%; background: #f8f6ff; padding: 15px; border-radius: 8px; }
+  .addr h4 { font-size: 10px; text-transform: uppercase; color: #9050e9; letter-spacing: 1px; margin: 0 0 8px; }
+  .addr p { margin: 2px 0; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+  thead th { background: #9050e9; color: white; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; }
+  tbody td { padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 13px; }
+  .totals { text-align: right; }
+  .totals table { width: 300px; margin-left: auto; }
+  .totals td { padding: 6px 12px; font-size: 13px; }
+  .total-row { font-weight: bold; font-size: 16px; border-top: 2px solid #9050e9; color: #9050e9; }
+  .terms { background: #f8f6ff; padding: 15px; border-radius: 8px; font-size: 12px; margin-top: 25px; }
+  .terms h4 { color: #9050e9; margin: 0 0 8px; }
+  .footer { margin-top: 30px; font-size: 11px; color: #999; text-align: center; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="logo">City General Hospital</div>
+      <div class="logo-sub">Procurement Department</div>
+      <div class="logo-sub">456 Healthcare Drive, Suite 200</div>
+      <div class="logo-sub">San Francisco, CA 94107</div>
+      <div class="logo-sub">Phone: (415) 555-0198</div>
+    </div>
+    <div class="po-title">
+      <h1>PURCHASE ORDER</h1>
+      <div class="po-meta">
+        <strong>PO #:</strong> PO-MED-4521<br>
+        <strong>Date:</strong> March 10, 2026<br>
+        <strong>Required By:</strong> March 20, 2026<br>
+        <strong>Buyer:</strong> Dr. Sarah Mitchell
+      </div>
+    </div>
+  </div>
+
+  <div class="addresses">
+    <div class="addr">
+      <h4>Vendor</h4>
+      <p><strong>Medico Pharmaceuticals Inc.</strong></p>
+      <p>123 Pharma Boulevard</p>
+      <p>San Francisco, CA 94105</p>
+      <p>Contact: Sales Department</p>
+      <p>Phone: (415) 555-0142</p>
+    </div>
+    <div class="addr">
+      <h4>Ship To</h4>
+      <p><strong>City General Hospital - Pharmacy</strong></p>
+      <p>456 Healthcare Drive, Building B</p>
+      <p>San Francisco, CA 94107</p>
+      <p>Attn: Pharmacy Receiving</p>
+      <p>Hours: Mon-Fri 7AM-5PM</p>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Line</th><th>Description</th><th>NDC Code</th><th>Qty</th><th>UOM</th><th>Unit Price</th><th>Total</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Amoxicillin 500mg Capsules (100ct)</td><td>0093-3109-01</td><td>50</td><td>Bottles</td><td>$24.50</td><td>$1,225.00</td></tr>
+      <tr><td>2</td><td>Lisinopril 10mg Tablets (90ct)</td><td>0093-7338-98</td><td>30</td><td>Bottles</td><td>$18.75</td><td>$562.50</td></tr>
+      <tr><td>3</td><td>Metformin 850mg Tablets (60ct)</td><td>0093-7214-56</td><td>40</td><td>Bottles</td><td>$12.30</td><td>$492.00</td></tr>
+      <tr><td>4</td><td>Omeprazole 20mg Capsules (30ct)</td><td>0093-5721-30</td><td>25</td><td>Bottles</td><td>$15.60</td><td>$390.00</td></tr>
+      <tr><td>5</td><td>Atorvastatin 40mg Tablets (30ct)</td><td>0093-5058-30</td><td>35</td><td>Bottles</td><td>$22.40</td><td>$784.00</td></tr>
+      <tr><td>6</td><td>Surgical Gloves, Nitrile, Large (100ct)</td><td>N/A</td><td>20</td><td>Boxes</td><td>$9.99</td><td>$199.80</td></tr>
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <table>
+      <tr><td>Subtotal:</td><td>$3,653.30</td></tr>
+      <tr><td>Estimated Tax:</td><td>$315.10</td></tr>
+      <tr><td>Estimated Shipping:</td><td>$45.00</td></tr>
+      <tr class="total-row"><td>Estimated Total:</td><td>$4,013.40</td></tr>
+    </table>
+  </div>
+
+  <div class="terms">
+    <h4>Terms and Conditions</h4>
+    <p><strong>Payment Terms:</strong> Net 30 from date of invoice</p>
+    <p><strong>Shipping:</strong> FOB Destination, freight prepaid</p>
+    <p><strong>Special Instructions:</strong> All pharmaceutical products must include Certificates of Analysis. Temperature-sensitive items must be shipped in validated cold chain packaging. Deliver to Dock C during receiving hours only.</p>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; margin-top: 40px;">
+    <div>
+      <div style="width: 200px; border-top: 1px solid #333; padding-top: 5px; font-size: 11px; color: #666;">
+        Authorized Signature
+      </div>
+      <div style="font-size: 12px; margin-top: 4px;">Dr. Sarah Mitchell, Procurement</div>
+    </div>
+    <div>
+      <div style="width: 200px; border-top: 1px solid #333; padding-top: 5px; font-size: 11px; color: #666;">
+        Date
+      </div>
+      <div style="font-size: 12px; margin-top: 4px;">March 10, 2026</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>City General Hospital | This purchase order is subject to the terms stated above.</p>
+  </div>
+</body>
+</html>

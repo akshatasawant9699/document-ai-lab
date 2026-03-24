@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Lab Report - Medico Diagnostics</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; color: #333; }
+  .header { display: flex; justify-content: space-between; border-bottom: 3px solid #0b827c; padding-bottom: 15px; margin-bottom: 25px; }
+  .logo { font-size: 24px; font-weight: bold; color: #032d60; }
+  .logo-sub { font-size: 12px; color: #666; }
+  .report-title { text-align: right; }
+  .report-title h1 { color: #0b827c; margin: 0; font-size: 26px; }
+  .report-meta { font-size: 12px; color: #555; margin-top: 5px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+  .info-card { background: #f8fffe; border: 1px solid #e0f0ee; border-radius: 8px; padding: 12px; }
+  .info-card h4 { font-size: 10px; text-transform: uppercase; color: #0b827c; letter-spacing: 1px; margin: 0 0 8px; }
+  .info-card p { margin: 2px 0; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+  thead th { background: #0b827c; color: white; padding: 8px 10px; text-align: left; font-size: 11px; text-transform: uppercase; }
+  tbody td { padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 12px; }
+  .flag-high { color: #ea001e; font-weight: bold; }
+  .flag-normal { color: #2e844a; }
+  .notes { background: #fff8e6; border: 1px solid #ffeeba; border-radius: 8px; padding: 15px; margin-top: 20px; font-size: 12px; }
+  .notes h4 { margin: 0 0 8px; color: #856404; }
+  .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 11px; color: #999; text-align: center; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="logo">Medico Diagnostics Lab</div>
+      <div class="logo-sub">A Division of Medico Pharmaceuticals Inc.</div>
+      <div class="logo-sub">500 Lab Sciences Way, San Francisco, CA 94158</div>
+      <div class="logo-sub">CLIA #: 05D1234567 | CAP Accredited</div>
+    </div>
+    <div class="report-title">
+      <h1>LAB REPORT</h1>
+      <div class="report-meta">
+        <strong>Report #:</strong> LR-2026-03-4421<br>
+        <strong>Date Reported:</strong> March 22, 2026
+      </div>
+    </div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-card">
+      <h4>Patient Information</h4>
+      <p><strong>Name:</strong> Robert J. Martinez</p>
+      <p><strong>DOB:</strong> 05/12/1978 | <strong>Age:</strong> 47</p>
+      <p><strong>Gender:</strong> Male</p>
+      <p><strong>MRN:</strong> MRN-445291</p>
+    </div>
+    <div class="info-card">
+      <h4>Ordering Physician</h4>
+      <p><strong>Dr. James A. Wilson, M.D.</strong></p>
+      <p>Pacific Heights Medical Clinic</p>
+      <p>NPI: 1234567890</p>
+      <p><strong>Collected:</strong> March 20, 2026 08:15 AM</p>
+    </div>
+  </div>
+
+  <h3 style="color: #0b827c; border-bottom: 1px solid #e0f0ee; padding-bottom: 8px;">Complete Blood Count (CBC)</h3>
+  <table>
+    <thead>
+      <tr><th>Test</th><th>Result</th><th>Units</th><th>Reference Range</th><th>Flag</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>WBC</td><td>7.2</td><td>x10^3/uL</td><td>4.5-11.0</td><td class="flag-normal">Normal</td></tr>
+      <tr><td>RBC</td><td>4.85</td><td>x10^6/uL</td><td>4.50-5.90</td><td class="flag-normal">Normal</td></tr>
+      <tr><td>Hemoglobin</td><td>14.2</td><td>g/dL</td><td>13.5-17.5</td><td class="flag-normal">Normal</td></tr>
+      <tr><td>Hematocrit</td><td>42.1</td><td>%</td><td>38.3-48.6</td><td class="flag-normal">Normal</td></tr>
+      <tr><td>Platelets</td><td>245</td><td>x10^3/uL</td><td>150-400</td><td class="flag-normal">Normal</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="color: #0b827c; border-bottom: 1px solid #e0f0ee; padding-bottom: 8px;">Comprehensive Metabolic Panel (CMP)</h3>
+  <table>
+    <thead>
+      <tr><th>Test</th><th>Result</th><th>Units</th><th>Reference Range</th><th>Flag</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Glucose, Fasting</td><td>142</td><td>mg/dL</td><td>70-100</td><td class="flag-high">HIGH</td></tr>
+      <tr><td>HbA1c</td><td>7.1</td><td>%</td><td>&lt;5.7</td><td class="flag-high">HIGH</td></tr>
+      <tr><td>BUN</td><td>18</td><td>mg/dL</td><td>7-20</td><td class="flag-normal">Normal</td></tr>
+      <tr><td>Creatinine</td><td>1.0</td><td>mg/dL</td><td>0.7-1.3</td><td class="flag-normal">Normal</td></tr>
+      <tr><td>eGFR</td><td>89</td><td>mL/min</td><td>&gt;60</td><td class="flag-normal">Normal</td></tr>
+      <tr><td>Sodium</td><td>140</td><td>mEq/L</td><td>136-145</td><td class="flag-normal">Normal</td></tr>
+      <tr><td>Potassium</td><td>4.2</td><td>mEq/L</td><td>3.5-5.0</td><td class="flag-normal">Normal</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="color: #0b827c; border-bottom: 1px solid #e0f0ee; padding-bottom: 8px;">Lipid Panel</h3>
+  <table>
+    <thead>
+      <tr><th>Test</th><th>Result</th><th>Units</th><th>Reference Range</th><th>Flag</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Total Cholesterol</td><td>228</td><td>mg/dL</td><td>&lt;200</td><td class="flag-high">HIGH</td></tr>
+      <tr><td>LDL Cholesterol</td><td>148</td><td>mg/dL</td><td>&lt;100</td><td class="flag-high">HIGH</td></tr>
+      <tr><td>HDL Cholesterol</td><td>42</td><td>mg/dL</td><td>&gt;40</td><td class="flag-normal">Normal</td></tr>
+      <tr><td>Triglycerides</td><td>190</td><td>mg/dL</td><td>&lt;150</td><td class="flag-high">HIGH</td></tr>
+    </tbody>
+  </table>
+
+  <div class="notes">
+    <h4>Clinical Notes</h4>
+    <p><strong>Interpretation:</strong> Elevated fasting glucose and HbA1c consistent with diabetes management review needed. Lipid panel shows elevated LDL and triglycerides; current statin therapy may need adjustment. Kidney function normal - eGFR adequate for continued metformin use.</p>
+    <p><strong>Recommendation:</strong> Follow-up with ordering physician. Repeat lipid panel in 3 months after therapy adjustment.</p>
+  </div>
+
+  <div class="footer">
+    <p>Medico Diagnostics Lab | Results verified by: Dr. Emily Chen, Ph.D., Laboratory Director</p>
+    <p>This report is confidential and intended solely for the use of the ordering physician and patient.</p>
+  </div>
+</body>
+</html>

@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Document AI Learning Lab
+
+A hands-on learning portal for **Salesforce Data Cloud Document AI**. Built with Next.js 16, Tailwind CSS, and designed for Vercel deployment.
+
+## What's Inside
+
+### Recipes (Step-by-Step Tutorials)
+
+1. **Basic Salesforce Setup** - Enable Document AI, configure schemas, and test extraction from the Salesforce UI
+2. **API with Postman** - OAuth 2.0 authentication, REST API calls, base64 payloads, and confidence score parsing
+3. **End-to-End Integration** - Custom objects, Apex class, Screen Flow, and Agentforce agent for Medico Pharma
+
+### Sample Documents (Medico Pharmaceuticals)
+
+- Pharmaceutical invoices (2 variants)
+- Doctor's prescription
+- Lab report with test results
+- Purchase order
+
+### Python App Reference
+
+- Flask-based Document AI gateway with OAuth 2.0 PKCE
+- Smart schema generator
+- CLI demo script
+- Vercel deployment configuration
+
+### Resources
+
+- Official Salesforce documentation and Trailhead modules
+- Implementation guides and tutorials
+- GitHub testbed and community tools
+- Video demos and walkthroughs
+- API reference with supported models
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy to Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build   # Verify the build succeeds
+npx vercel      # Deploy to Vercel
+```
 
-## Learn More
+Or connect your Git repository to Vercel for automatic deployments.
 
-To learn more about Next.js, take a look at the following resources:
+## Tech Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Next.js 16** with App Router
+- **Tailwind CSS 4** for styling
+- **TypeScript** for type safety
+- **Static export** - all pages are pre-rendered at build time
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+  app/
+    page.tsx                    # Home / landing page
+    recipes/
+      page.tsx                  # Recipes overview
+      basic-setup/page.tsx      # Recipe 1: Salesforce UI setup
+      api-postman/page.tsx      # Recipe 2: REST API + Postman
+      end-to-end/page.tsx       # Recipe 3: Apex + Flow + Agentforce
+    python-app/page.tsx         # Python app code reference
+    samples/page.tsx            # Sample documents page
+    resources/page.tsx          # Curated resource links
+  components/
+    Navigation.tsx              # Top navigation bar
+    CodeBlock.tsx               # Syntax-highlighted code with copy
+    StepCard.tsx                # Numbered step cards for recipes
+    InfoBox.tsx                 # Info/warning/tip callout boxes
+    RecipeLayout.tsx            # Shared layout for recipe pages
+public/
+  samples/                      # Medico Pharma HTML documents
+```
