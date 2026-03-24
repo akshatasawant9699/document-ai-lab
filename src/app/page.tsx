@@ -48,8 +48,8 @@ const highlights = [
     color: "from-teal-500 to-emerald-500",
   },
   {
-    title: "Python Gateway App",
-    description: "A ready-to-deploy Flask app with OAuth PKCE, file upload, and confidence score display.",
+    title: "Try It Live",
+    description: "Upload documents, pick an LLM model, and extract structured data with confidence scores in your browser.",
     href: "/python-app",
     color: "from-purple-500 to-indigo-500",
   },

@@ -15,7 +15,7 @@ const navItems = [
       { label: "End-to-End Integration", href: "/recipes/end-to-end" },
     ],
   },
-  { label: "Python App", href: "/python-app" },
+  { label: "Try It", href: "/python-app" },
   { label: "Sample Documents", href: "/samples" },
   { label: "Resources", href: "/resources" },
 ];
