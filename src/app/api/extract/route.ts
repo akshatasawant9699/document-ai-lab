@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const version = apiVersion || "v63.0";
+  const version = apiVersion || "v65.0";
   const endpoint =
     `${instanceUrl}/services/data/${version}/ssot/document-processing/actions/extract-data` +
     `?htmlEncode=false&extractDataWithConfidenceScore=true`;
