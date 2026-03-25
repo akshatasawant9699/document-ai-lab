@@ -39,4 +39,48 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Salesforce
 .sfdx/
+.sf/
+.localdevserver/
+.org/
+orgs/
+*.sfdx
+**/profiles/
+**/permissionsets/
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+.classpath
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Python (if using Python scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+ENV/
+env/
+*.egg-info/
+dist/
+build/
+
+# Local development
+.cache/
+*.local
+.todo
+.notes

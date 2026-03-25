@@ -1,25 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function AuthCallback() {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("Completing authentication...");
+  const ran = useRef(false);
 
   useEffect(() => {
+    if (ran.current) return;
+    ran.current = true;
+
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     const errorParam = params.get("error");
 
     if (errorParam) {
-      setStatus("error");
-      setMessage(params.get("error_description") || errorParam);
+      queueMicrotask(() => {
+        setStatus("error");
+        setMessage(params.get("error_description") || errorParam);
+      });
       return;
     }
 
     if (!code) {
-      setStatus("error");
-      setMessage("No authorization code received.");
+      queueMicrotask(() => {
+        setStatus("error");
+        setMessage("No authorization code received.");
+      });
       return;
     }
 
@@ -27,8 +35,10 @@ export default function AuthCallback() {
     const verifier = localStorage.getItem("docai_pkce_verifier") || "";
 
     if (!saved) {
-      setStatus("error");
-      setMessage("Login configuration not found. Please try again.");
+      queueMicrotask(() => {
+        setStatus("error");
+        setMessage("Login configuration not found. Please try again.");
+      });
       return;
     }
 
@@ -63,7 +73,6 @@ export default function AuthCallback() {
 
           setStatus("success");
           setMessage("Authenticated successfully! This window will close.");
-
           setTimeout(() => window.close(), 1500);
         } else {
           setStatus("error");

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
+import CodeBlock from "@/components/CodeBlock";
 
 const LLM_MODELS = [
   { id: "llmgateway__VertexAIGemini20Flash001", label: "Gemini 2.0 Flash", note: "Recommended for PDFs" },
@@ -66,6 +68,7 @@ export default function ExtractPage() {
   const [results, setResults] = useState<ExtractionData[] | null>(null);
   const [error, setError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
+  const [showPythonCode, setShowPythonCode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -633,6 +636,630 @@ export default function ExtractPage() {
           )}
         </div>
       )}
+
+      {/* Python Code Reference Section */}
+      <div className="mt-12 border-t border-gray-200 pt-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-[var(--sf-navy)]">Python Implementation Reference</h2>
+            <p className="text-gray-600 mt-1">Complete Python Flask app with OAuth 2.0 PKCE, schema generation, and CLI demo</p>
+          </div>
+          <button
+            onClick={() => setShowPythonCode(!showPythonCode)}
+            className="px-4 py-2 bg-[var(--sf-blue)] text-white rounded-lg hover:bg-[var(--sf-blue-dark)] transition-colors flex items-center gap-2"
+          >
+            {showPythonCode ? "Hide" : "Show"} Python Code
+            <svg className={`w-4 h-4 transition-transform ${showPythonCode ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+
+        {showPythonCode && (
+          <div className="space-y-8">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+              <h3 className="font-semibold text-[var(--sf-navy)] mb-2 flex items-center gap-2">
+                <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                About This Python App
+              </h3>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                This reference implementation shows how to build a Python-based Document AI gateway with OAuth 2.0 PKCE authentication,
+                intelligent schema generation, and a command-line interface. The Flask app can be deployed to Vercel using serverless functions.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-[var(--sf-navy)] mb-3">1. Flask App with OAuth 2.0 PKCE</h3>
+              <CodeBlock
+                language="python"
+                filename="app.py"
+                code={`from flask import Flask, request, jsonify, session, redirect
+from flask_cors import CORS
+import requests
+import base64
+import hashlib
+import secrets
+import os
+
+app = Flask(__name__)
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', secrets.token_hex(32))
+CORS(app, supports_credentials=True)
+
+# PKCE helper functions
+def generate_code_verifier():
+    """Generate a cryptographically random code verifier"""
+    return base64.urlsafe_b64encode(secrets.token_bytes(32)).decode('utf-8').rstrip('=')
+
+def generate_code_challenge(verifier):
+    """Generate code challenge from verifier using SHA256"""
+    digest = hashlib.sha256(verifier.encode('utf-8')).digest()
+    return base64.urlsafe_b64encode(digest).decode('utf-8').rstrip('=')
+
+@app.route('/auth/login', methods=['POST'])
+def start_auth():
+    """Initiate OAuth 2.0 PKCE flow"""
+    data = request.json
+    login_url = data.get('login_url')
+    client_id = data.get('client_id')
+    redirect_uri = data.get('redirect_uri', 'http://localhost:5000/auth/callback')
+
+    # Generate PKCE parameters
+    verifier = generate_code_verifier()
+    challenge = generate_code_challenge(verifier)
+
+    # Store verifier in session
+    session['code_verifier'] = verifier
+    session['login_url'] = login_url
+    session['client_id'] = client_id
+
+    # Build authorization URL
+    auth_url = f"{login_url}/services/oauth2/authorize"
+    params = {
+        'response_type': 'code',
+        'client_id': client_id,
+        'redirect_uri': redirect_uri,
+        'code_challenge': challenge,
+        'code_challenge_method': 'S256'
+    }
+
+    auth_url_full = auth_url + '?' + '&'.join([f"{k}={v}" for k, v in params.items()])
+
+    return jsonify({'auth_url': auth_url_full})
+
+@app.route('/auth/callback')
+def auth_callback():
+    """Handle OAuth callback and exchange code for token"""
+    code = request.args.get('code')
+    error = request.args.get('error')
+
+    if error:
+        return jsonify({'error': error}), 400
+
+    if not code:
+        return jsonify({'error': 'No authorization code received'}), 400
+
+    # Retrieve stored values
+    verifier = session.get('code_verifier')
+    login_url = session.get('login_url')
+    client_id = session.get('client_id')
+
+    if not all([verifier, login_url, client_id]):
+        return jsonify({'error': 'Session expired or invalid'}), 400
+
+    # Exchange code for token
+    token_url = f"{login_url}/services/oauth2/token"
+    token_data = {
+        'grant_type': 'authorization_code',
+        'code': code,
+        'client_id': client_id,
+        'code_verifier': verifier,
+        'redirect_uri': 'http://localhost:5000/auth/callback'
+    }
+
+    response = requests.post(token_url, data=token_data)
+
+    if response.status_code != 200:
+        return jsonify({'error': 'Token exchange failed', 'details': response.json()}), 400
+
+    token_response = response.json()
+
+    # Store tokens in session
+    session['access_token'] = token_response['access_token']
+    session['instance_url'] = token_response['instance_url']
+
+    return jsonify({
+        'access_token': token_response['access_token'],
+        'instance_url': token_response['instance_url']
+    })
+
+@app.route('/api/extract', methods=['POST'])
+def extract_document():
+    """Extract data from document using Document AI API"""
+    if 'access_token' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data = request.json
+    file_base64 = data.get('file_base64')
+    mime_type = data.get('mime_type', 'application/pdf')
+    schema = data.get('schema')
+    model = data.get('model', 'llmgateway__VertexAIGemini20Flash001')
+
+    if not file_base64:
+        return jsonify({'error': 'file_base64 is required'}), 400
+
+    # Call Document AI API
+    instance_url = session['instance_url']
+    access_token = session['access_token']
+
+    api_url = f"{instance_url}/services/data/v65.0/ssot/document-processing/actions/extract-data"
+    api_url += "?htmlEncode=false&extractDataWithConfidenceScore=true"
+
+    payload = {
+        'files': [{'mimeType': mime_type, 'data': file_base64}],
+        'mlModel': model
+    }
+
+    if schema:
+        payload['schemaConfig'] = schema
+
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json'
+    }
+
+    response = requests.post(api_url, json=payload, headers=headers)
+
+    if response.status_code != 200:
+        return jsonify({
+            'error': 'Extraction failed',
+            'status': response.status_code,
+            'details': response.text
+        }), response.status_code
+
+    return jsonify(response.json())
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
+`}
+              />
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-[var(--sf-navy)] mb-3">2. Smart Schema Generator</h3>
+              <CodeBlock
+                language="python"
+                filename="schema_generator.py"
+                code={`import json
+
+def generate_schema_from_filename(filename):
+    """Generate appropriate schema based on document type detected from filename"""
+    filename_lower = filename.lower()
+
+    # Detect document type
+    if 'invoice' in filename_lower or 'inv-' in filename_lower:
+        return generate_invoice_schema()
+    elif 'prescription' in filename_lower or 'rx' in filename_lower:
+        return generate_prescription_schema()
+    elif 'lab' in filename_lower or 'report' in filename_lower:
+        return generate_lab_report_schema()
+    elif 'po-' in filename_lower or 'purchase' in filename_lower:
+        return generate_purchase_order_schema()
+    else:
+        return generate_generic_schema()
+
+def generate_invoice_schema():
+    """Generate schema for pharmaceutical invoices"""
+    return {
+        "type": "object",
+        "properties": {
+            "invoice_number": {
+                "type": "string",
+                "description": "Unique invoice identifier"
+            },
+            "invoice_date": {
+                "type": "string",
+                "description": "Date the invoice was issued"
+            },
+            "due_date": {
+                "type": "string",
+                "description": "Payment due date"
+            },
+            "po_number": {
+                "type": "string",
+                "description": "Associated purchase order number"
+            },
+            "vendor_name": {
+                "type": "string",
+                "description": "Name of the vendor/seller"
+            },
+            "bill_to_name": {
+                "type": "string",
+                "description": "Billing recipient organization name"
+            },
+            "bill_to_address": {
+                "type": "string",
+                "description": "Billing address"
+            },
+            "ship_to_name": {
+                "type": "string",
+                "description": "Shipping recipient name"
+            },
+            "subtotal": {
+                "type": "number",
+                "description": "Subtotal before tax"
+            },
+            "tax_amount": {
+                "type": "number",
+                "description": "Total tax amount"
+            },
+            "shipping_amount": {
+                "type": "number",
+                "description": "Shipping and handling cost"
+            },
+            "total_due": {
+                "type": "number",
+                "description": "Total amount due for payment"
+            },
+            "line_items": {
+                "type": "array",
+                "description": "Invoice line items",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "description": {
+                            "type": "string",
+                            "description": "Product description"
+                        },
+                        "ndc_code": {
+                            "type": "string",
+                            "description": "National Drug Code"
+                        },
+                        "quantity": {
+                            "type": "number",
+                            "description": "Quantity ordered"
+                        },
+                        "unit_price": {
+                            "type": "number",
+                            "description": "Price per unit"
+                        },
+                        "amount": {
+                            "type": "number",
+                            "description": "Line total (quantity × unit_price)"
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+def generate_prescription_schema():
+    """Generate schema for medical prescriptions"""
+    return {
+        "type": "object",
+        "properties": {
+            "clinic_name": {"type": "string", "description": "Medical clinic name"},
+            "doctor_name": {"type": "string", "description": "Prescribing physician full name"},
+            "doctor_dea": {"type": "string", "description": "DEA registration number"},
+            "doctor_npi": {"type": "string", "description": "National Provider Identifier"},
+            "patient_name": {"type": "string", "description": "Patient full name"},
+            "patient_dob": {"type": "string", "description": "Patient date of birth"},
+            "patient_mrn": {"type": "string", "description": "Medical Record Number"},
+            "prescription_date": {"type": "string", "description": "Date prescription was written"},
+            "diagnosis_codes": {"type": "string", "description": "ICD-10 diagnosis codes"},
+            "allergies": {"type": "string", "description": "Known patient allergies"},
+            "medications": {
+                "type": "array",
+                "description": "List of prescribed medications",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Medication name and strength"},
+                        "sig": {"type": "string", "description": "Dosage instructions"},
+                        "quantity": {"type": "string", "description": "Quantity to dispense"},
+                        "refills": {"type": "string", "description": "Number of refills"}
+                    }
+                }
+            }
+        }
+    }
+
+def generate_lab_report_schema():
+    """Generate schema for laboratory reports"""
+    return {
+        "type": "object",
+        "properties": {
+            "lab_name": {"type": "string", "description": "Laboratory name"},
+            "report_number": {"type": "string", "description": "Unique report identifier"},
+            "report_date": {"type": "string", "description": "Date results were reported"},
+            "patient_name": {"type": "string", "description": "Patient full name"},
+            "patient_dob": {"type": "string", "description": "Patient date of birth"},
+            "ordering_physician": {"type": "string", "description": "Doctor who ordered tests"},
+            "collection_date": {"type": "string", "description": "Specimen collection date/time"},
+            "test_results": {
+                "type": "array",
+                "description": "Individual test results",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "test_name": {"type": "string", "description": "Lab test name"},
+                        "result": {"type": "string", "description": "Test result value"},
+                        "units": {"type": "string", "description": "Unit of measurement"},
+                        "reference_range": {"type": "string", "description": "Normal reference range"},
+                        "flag": {"type": "string", "description": "Normal, HIGH, or LOW"}
+                    }
+                }
+            }
+        }
+    }
+
+def generate_generic_schema():
+    """Generate a generic schema for unknown document types"""
+    return {
+        "type": "object",
+        "properties": {
+            "document_type": {"type": "string", "description": "Type of document"},
+            "document_id": {"type": "string", "description": "Primary document identifier"},
+            "date": {"type": "string", "description": "Primary date on document"},
+            "from_party": {"type": "string", "description": "Sender or issuing party"},
+            "to_party": {"type": "string", "description": "Recipient party"},
+            "total_amount": {"type": "number", "description": "Total monetary amount if applicable"},
+            "key_items": {
+                "type": "array",
+                "description": "Key items or entries in the document",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string"},
+                        "detail": {"type": "string"},
+                        "value": {"type": "string"}
+                    }
+                }
+            }
+        }
+    }
+
+# Usage
+if __name__ == "__main__":
+    # Example: Generate schema from filename
+    filename = "medico-invoice-001.pdf"
+    schema = generate_schema_from_filename(filename)
+    print(json.dumps(schema, indent=2))
+`}
+              />
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-[var(--sf-navy)] mb-3">3. CLI Demo Script</h3>
+              <CodeBlock
+                language="python"
+                filename="cli_demo.py"
+                code={`#!/usr/bin/env python3
+"""
+Document AI CLI Demo
+Extract data from documents via command line
+"""
+
+import argparse
+import json
+import base64
+import requests
+from pathlib import Path
+from schema_generator import generate_schema_from_filename
+
+def read_file_as_base64(file_path):
+    """Read file and encode as base64"""
+    with open(file_path, 'rb') as f:
+        return base64.b64encode(f.read()).decode('utf-8')
+
+def extract_document(instance_url, access_token, file_path, model='llmgateway__VertexAIGemini20Flash001', schema=None):
+    """Extract data from a document using Document AI API"""
+
+    # Read and encode file
+    file_base64 = read_file_as_base64(file_path)
+
+    # Determine MIME type
+    suffix = Path(file_path).suffix.lower()
+    mime_types = {
+        '.pdf': 'application/pdf',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.tiff': 'image/tiff',
+        '.bmp': 'image/bmp'
+    }
+    mime_type = mime_types.get(suffix, 'application/pdf')
+
+    # Auto-generate schema if not provided
+    if not schema:
+        filename = Path(file_path).name
+        schema = generate_schema_from_filename(filename)
+        print(f"📋 Auto-generated schema for: {filename}")
+
+    # Build API request
+    api_url = f"{instance_url}/services/data/v65.0/ssot/document-processing/actions/extract-data"
+    api_url += "?htmlEncode=false&extractDataWithConfidenceScore=true"
+
+    payload = {
+        'files': [{'mimeType': mime_type, 'data': file_base64}],
+        'mlModel': model,
+        'schemaConfig': schema
+    }
+
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json'
+    }
+
+    print(f"🚀 Extracting data from {Path(file_path).name} using {model}...")
+
+    # Make API call
+    response = requests.post(api_url, json=payload, headers=headers)
+
+    if response.status_code != 200:
+        print(f"❌ Error: {response.status_code}")
+        print(response.text)
+        return None
+
+    return response.json()
+
+def print_results(results, show_confidence=True):
+    """Pretty print extraction results"""
+    if not results or 'data' not in results:
+        print("⚠️  No results returned")
+        return
+
+    for idx, page_group in enumerate(results['data']):
+        print(f"\\n📄 Page Group {idx + 1}")
+        if 'pageRange' in page_group:
+            print(f"   Pages: {page_group['pageRange']}")
+
+        extracted = page_group.get('extractedValues', {})
+
+        for field, details in extracted.items():
+            value = details.get('value', 'N/A')
+            confidence = details.get('confidenceScore')
+
+            # Format field name
+            field_name = field.replace('_', ' ').title()
+
+            # Print value
+            if isinstance(value, list):
+                print(f"\\n  {field_name}:")
+                for item in value:
+                    print(f"    • {json.dumps(item, indent=6)}")
+            else:
+                print(f"  {field_name}: {value}")
+
+            # Print confidence score
+            if show_confidence and confidence is not None:
+                confidence_pct = int(confidence * 100)
+                emoji = "🟢" if confidence >= 0.9 else "🟡" if confidence >= 0.7 else "🔴"
+                print(f"    {emoji} Confidence: {confidence_pct}%")
+
+def main():
+    parser = argparse.ArgumentParser(description='Document AI CLI Demo')
+    parser.add_argument('file', help='Path to document file')
+    parser.add_argument('--instance-url', required=True, help='Salesforce instance URL')
+    parser.add_argument('--access-token', required=True, help='OAuth access token')
+    parser.add_argument('--model', default='llmgateway__VertexAIGemini20Flash001',
+                       help='LLM model to use')
+    parser.add_argument('--schema', help='Path to custom JSON schema file')
+    parser.add_argument('--output', help='Save results to JSON file')
+    parser.add_argument('--no-confidence', action='store_true', help='Hide confidence scores')
+
+    args = parser.parse_args()
+
+    # Load custom schema if provided
+    schema = None
+    if args.schema:
+        with open(args.schema, 'r') as f:
+            schema = json.load(f)
+
+    # Extract document
+    results = extract_document(
+        args.instance_url,
+        args.access_token,
+        args.file,
+        model=args.model,
+        schema=schema
+    )
+
+    if results:
+        print("\\n✅ Extraction complete!\\n")
+        print_results(results, show_confidence=not args.no_confidence)
+
+        # Save to file if requested
+        if args.output:
+            with open(args.output, 'w') as f:
+                json.dump(results, f, indent=2)
+            print(f"\\n💾 Results saved to {args.output}")
+    else:
+        print("\\n❌ Extraction failed")
+        return 1
+
+    return 0
+
+if __name__ == '__main__':
+    exit(main())
+
+# Example usage:
+# python cli_demo.py medico-invoice-001.pdf \\
+#   --instance-url https://your-instance.salesforce.com \\
+#   --access-token your_access_token \\
+#   --output results.json
+`}
+              />
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-[var(--sf-navy)] mb-3">4. Vercel Deployment Configuration</h3>
+              <CodeBlock
+                language="json"
+                filename="vercel.json"
+                code={`{
+  "version": 2,
+  "builds": [
+    {
+      "src": "app.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app.py"
+    }
+  ],
+  "env": {
+    "FLASK_SECRET_KEY": "@flask-secret-key"
+  }
+}
+`}
+              />
+              <CodeBlock
+                language="text"
+                filename="requirements.txt"
+                code={`Flask==3.0.0
+flask-cors==4.0.0
+requests==2.31.0
+python-dotenv==1.0.0
+gunicorn==21.2.0
+`}
+              />
+            </div>
+
+            <div className="bg-[var(--sf-cloud)] border border-[var(--sf-blue)]/30 rounded-xl p-6">
+              <h3 className="font-semibold text-[var(--sf-navy)] mb-3 flex items-center gap-2">
+                <svg className="w-5 h-5 text-[var(--sf-blue)]" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                  <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                </svg>
+                Quick Start Guide
+              </h3>
+              <ol className="text-sm space-y-2 text-gray-700">
+                <li><strong>1.</strong> Clone or download the Python files above</li>
+                <li><strong>2.</strong> Install dependencies: <code className="bg-white px-2 py-0.5 rounded">pip install -r requirements.txt</code></li>
+                <li><strong>3.</strong> Set environment variables: <code className="bg-white px-2 py-0.5 rounded">export FLASK_SECRET_KEY=your_secret</code></li>
+                <li><strong>4.</strong> Run locally: <code className="bg-white px-2 py-0.5 rounded">python app.py</code></li>
+                <li><strong>5.</strong> Deploy to Vercel: <code className="bg-white px-2 py-0.5 rounded">vercel --prod</code></li>
+              </ol>
+              <div className="mt-4 pt-4 border-t border-blue-200">
+                <p className="text-sm text-gray-600 mb-2"><strong>Related Resources:</strong></p>
+                <div className="flex flex-wrap gap-2">
+                  <Link href="/recipes/api-postman" className="text-xs px-3 py-1.5 bg-white rounded-lg hover:bg-blue-50 transition-colors">
+                    Recipe 2: API with Postman
+                  </Link>
+                  <Link href="/resources" className="text-xs px-3 py-1.5 bg-white rounded-lg hover:bg-blue-50 transition-colors">
+                    API Documentation
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
