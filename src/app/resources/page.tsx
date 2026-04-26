@@ -42,14 +42,14 @@ const sections = [
     ],
   },
   {
-    title: "Slack Community & Support",
+    title: "Community & Support",
     color: "border-purple-500",
     items: [
       {
-        title: "#dc-document-ai-support",
-        url: "https://salesforce.enterprise.slack.com/",
-        description: "Official Salesforce internal Slack channel for Document AI questions, troubleshooting, and feature discussions. Active community support from product team and fellow developers.",
-        tag: "Slack Channel",
+        title: "Salesforce Stack Exchange",
+        url: "https://salesforce.stackexchange.com/questions/tagged/data-cloud",
+        description: "Ask and answer questions about Data Cloud and Document AI on Salesforce Stack Exchange. Active community of developers and architects.",
+        tag: "Q&A Forum",
       },
       {
         title: "Salesforce Developers Slack",
@@ -106,16 +106,16 @@ const sections = [
         tag: "Official Tutorial",
       },
       {
-        title: "Contact Enrichment Screen Flow Guide",
-        url: "https://docs.google.com/document/d/1yy7EDfQRf9RgmLbVE1c1p6FquSMJBMJM6ZEXyB6Xwsg/edit",
-        description: "Implementation guide for building a contact enrichment Screen Flow using the Transactional API.",
-        tag: "Community Guide",
+        title: "Apex Integration with Document AI",
+        url: "https://developer.salesforce.com/docs/data/data-cloud-int/guide/c360-a-document-ai.html",
+        description: "Official guide covering Apex invocable methods, HTTP callouts to the Document AI API, and integration patterns for Screen Flows.",
+        tag: "Developer Guide",
       },
       {
-        title: "Loan Prequalification Agentforce Guide",
-        url: "https://docs.google.com/document/d/1pE1Yr8xXTO0Z3cwhpPO9yJ4zAJ_meNvpfMpIWG0Bls8/edit",
-        description: "Step-by-step implementation guide for the Loan Prequalification Agentforce agent demo.",
-        tag: "Community Guide",
+        title: "Agentforce Developer Guide",
+        url: "https://developer.salesforce.com/docs/einstein/genai/guide/agents-intro.htm",
+        description: "Build autonomous agents with Agentforce. Covers agent topics, actions, and integration with Document AI for document processing workflows.",
+        tag: "Developer Guide",
       },
     ],
   },
@@ -130,9 +130,9 @@ const sections = [
         tag: "GitHub",
       },
       {
-        title: "Document AI Testbed (Live Demo)",
-        url: "https://docai-testbed-1698352246fd.herokuapp.com/",
-        description: "Deployed version of the testbed app on Heroku for quick API testing without local setup.",
+        title: "Document AI Learning Lab (This Portal)",
+        url: "https://document-ai-lab.vercel.app/python-app",
+        description: "Use the Try It section of this portal to connect to your Salesforce org and test Document AI extraction in real-time.",
         tag: "Live Demo",
       },
       {
@@ -148,22 +148,22 @@ const sections = [
     color: "border-[var(--sf-warning)]",
     items: [
       {
-        title: "Visual Schema Builder Demo",
-        url: "https://drive.google.com/file/d/1UMHgsyQ4_RjZ4CbGYWRWkkdoj8E7x9_7/view",
-        description: "5-minute walkthrough of the Visual Schema Builder UI for Document AI configuration.",
-        tag: "Video Demo",
+        title: "Document AI + Agentforce Playlist",
+        url: "https://youtube.com/playlist?list=PLgIMQe2PKPSI3azxe6ypZy4e9iXIFHK_u",
+        description: "YouTube playlist covering Document AI setup, Flow integration, Apex patterns, and Agentforce agent configuration.",
+        tag: "YouTube Playlist",
       },
       {
-        title: "Contact Enrichment Flow Demo",
-        url: "https://drive.google.com/file/d/1osG-CF4hSYS1KmBo61H0fCNUMAinS5Ef/view",
-        description: "Demo video showing the transactional API contact enrichment Screen Flow in action.",
-        tag: "Video Demo",
+        title: "Data Cloud Overview - Salesforce+",
+        url: "https://www.salesforce.com/plus/experience/dreamforce_2024/series/developer",
+        description: "Salesforce+ sessions covering Data Cloud architecture, Document AI capabilities, and real-world use cases from Dreamforce.",
+        tag: "Salesforce+",
       },
       {
-        title: "Loan Prequalification Agent Demo",
-        url: "https://drive.google.com/file/d/1nxHECsA96px-spkjEhCyo7xAe0HuVBus/view",
-        description: "Demo video of the Loan Prequalification Agentforce agent processing loan documents.",
-        tag: "Video Demo",
+        title: "Trailhead Live: Data Cloud Sessions",
+        url: "https://trailhead.salesforce.com/live/videos/a2r3k000001n2KN",
+        description: "Recorded Trailhead Live sessions featuring Data Cloud demos, Document AI walkthroughs, and Q&A with product experts.",
+        tag: "Trailhead Live",
       },
       {
         title: "Salesforce Hulk: Document AI Walkthrough",
@@ -322,8 +322,7 @@ export default function ResourcesPage() {
         </h1>
         <p className="text-lg text-gray-600 max-w-3xl">
           A comprehensive collection of documentation, tutorials, videos, tools, and API references
-          for Salesforce Data Cloud Document AI. Sourced from official Salesforce docs, Slack channels (
-          <code className="mx-1 px-1.5 py-0.5 bg-gray-100 rounded text-sm">#dc-document-ai-support</code>),
+          for Salesforce Data Cloud Document AI. Sourced from official Salesforce docs,
           Trailblazer Community, developer blogs, and curated web resources.
         </p>
       </div>
