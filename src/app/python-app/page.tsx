@@ -14,6 +14,10 @@ const LLM_MODELS = [
 
 const API_VERSION = "v65.0";
 
+// Demo Connected App settings (users can override via env variables)
+const DEFAULT_CLIENT_ID = process.env.NEXT_PUBLIC_SF_CLIENT_ID || "";
+const DEFAULT_LOGIN_URL = process.env.NEXT_PUBLIC_SF_LOGIN_URL || "https://login.salesforce.com";
+
 interface FieldResult {
   value: unknown;
   confidenceScore?: number;
@@ -52,12 +56,10 @@ function ConfidenceBadge({ score }: { score?: number }) {
 }
 
 export default function ExtractPage() {
-  const [loginUrl, setLoginUrl] = useState("");
-  const [clientId, setClientId] = useState("");
-  const [clientSecret, setClientSecret] = useState("");
-  const [idpConfigName, setIdpConfigName] = useState("");
   const [auth, setAuth] = useState<{ accessToken: string; instanceUrl: string } | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
+  const [idpConfigs, setIdpConfigs] = useState<string[]>([]);
+  const [selectedIdpConfig, setSelectedIdpConfig] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [model, setModel] = useState(LLM_MODELS[0].id);
@@ -65,6 +67,7 @@ export default function ExtractPage() {
   const [detectedType, setDetectedType] = useState("");
   const [useIdpConfig, setUseIdpConfig] = useState(false);
   const [extracting, setExtracting] = useState(false);
+  const [loadingConfigs, setLoadingConfigs] = useState(false);
   const [results, setResults] = useState<ExtractionData[] | null>(null);
   const [error, setError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
@@ -72,22 +75,14 @@ export default function ExtractPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem("docai_login");
-    if (saved) {
-      try {
-        const { loginUrl: lu, clientId: ci, clientSecret: cs, idpConfigName: idp } = JSON.parse(saved);
-        if (lu) setLoginUrl(lu);
-        if (ci) setClientId(ci);
-        if (cs) setClientSecret(cs);
-        if (idp) { setIdpConfigName(idp); setUseIdpConfig(true); }
-      } catch { /* ignore */ }
-    }
-
     const savedAuth = localStorage.getItem("docai_auth");
     if (savedAuth) {
       try {
-        setAuth(JSON.parse(savedAuth));
+        const authData = JSON.parse(savedAuth);
+        setAuth(authData);
         setAuthenticated(true);
+        // Load IDP configurations after authentication
+        fetchIdpConfigs(authData);
       } catch { /* ignore */ }
     }
   }, []);
@@ -96,10 +91,13 @@ export default function ExtractPage() {
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
       if (event.data?.type === "docai_auth_success" && event.data.auth) {
-        setAuth(event.data.auth);
+        const authData = event.data.auth;
+        setAuth(authData);
         setAuthenticated(true);
         setAuthLoading(false);
         setError("");
+        // Load IDP configurations after successful authentication
+        fetchIdpConfigs(authData);
       }
     };
 
@@ -107,27 +105,58 @@ export default function ExtractPage() {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
+  const fetchIdpConfigs = async (authData: { accessToken: string; instanceUrl: string }) => {
+    setLoadingConfigs(true);
+    try {
+      const res = await fetch("/api/idp-configs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          instanceUrl: authData.instanceUrl,
+          accessToken: authData.accessToken,
+          apiVersion: API_VERSION,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setIdpConfigs(data.configs || []);
+        if (data.configs && data.configs.length > 0) {
+          setSelectedIdpConfig(data.configs[0]);
+          setUseIdpConfig(true);
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch IDP configs:", e);
+    } finally {
+      setLoadingConfigs(false);
+    }
+  };
+
   const startAuth = async () => {
-    if (!loginUrl || !clientId) {
-      setError("Login URL and Client ID are required.");
+    const clientId = DEFAULT_CLIENT_ID || prompt("Enter your Salesforce Connected App Client ID:");
+
+    if (!clientId) {
+      setError("Client ID is required. Please set NEXT_PUBLIC_SF_CLIENT_ID environment variable or enter it when prompted.");
       return;
     }
 
-    localStorage.setItem("docai_login", JSON.stringify({ loginUrl, clientId, clientSecret, idpConfigName }));
-
     const { verifier, challenge } = await generatePKCE();
     localStorage.setItem("docai_pkce_verifier", verifier);
+    localStorage.setItem("docai_client_id", clientId);
 
     const redirectUri = window.location.origin + "/auth/callback";
     const authUrl =
-      `${loginUrl}/services/oauth2/authorize` +
+      `${DEFAULT_LOGIN_URL}/services/oauth2/authorize` +
       `?response_type=code` +
       `&client_id=${encodeURIComponent(clientId)}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
       `&code_challenge=${challenge}` +
-      `&code_challenge_method=S256`;
+      `&code_challenge_method=S256` +
+      `&scope=api cdp_api refresh_token`;
 
     setAuthLoading(true);
+    setError("");
 
     const w = 600, h = 700;
     const left = window.screenX + (window.outerWidth - w) / 2;
@@ -150,8 +179,10 @@ export default function ExtractPage() {
         const savedAuth = localStorage.getItem("docai_auth");
         if (savedAuth && !authenticated) {
           try {
-            setAuth(JSON.parse(savedAuth));
+            const authData = JSON.parse(savedAuth);
+            setAuth(authData);
             setAuthenticated(true);
+            fetchIdpConfigs(authData);
           } catch { /* ignore */ }
         }
         setAuthLoading(false);
@@ -219,8 +250,8 @@ export default function ExtractPage() {
         mimeType: file.type || "application/pdf",
       };
 
-      if (useIdpConfig && idpConfigName) {
-        body.idpConfigName = idpConfigName;
+      if (useIdpConfig && selectedIdpConfig) {
+        body.idpConfigName = selectedIdpConfig;
       } else {
         body.model = model;
         body.schema = schema;
@@ -318,100 +349,55 @@ export default function ExtractPage() {
       {/* STEP 1: Authenticate */}
       {!authenticated && (
         <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm">
-          <div className="max-w-lg mx-auto">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-[var(--sf-cloud)] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-[var(--sf-blue)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-semibold text-[var(--sf-navy)] mb-1">Login with Salesforce</h2>
-              <p className="text-sm text-gray-500">
-                Connect to your Salesforce org to access Document AI. A new window will open for Salesforce login.
-              </p>
+          <div className="max-w-md mx-auto text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-[var(--sf-blue)] to-[var(--sf-navy)] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+              </svg>
             </div>
+            <h2 className="text-2xl font-bold text-[var(--sf-navy)] mb-2">Test Document AI</h2>
+            <p className="text-gray-600 mb-8">
+              Click below to connect your Salesforce org and start extracting data from documents in seconds.
+            </p>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Login URL</label>
-                <input
-                  type="text"
-                  value={loginUrl}
-                  onChange={(e) => setLoginUrl(e.target.value)}
-                  placeholder="https://your-domain.my.salesforce.com"
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[var(--sf-blue)] focus:border-transparent outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
-                <input
-                  type="text"
-                  value={clientId}
-                  onChange={(e) => setClientId(e.target.value)}
-                  placeholder="External Client App Client ID"
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[var(--sf-blue)] focus:border-transparent outline-none"
-                />
-              </div>
-
-              <details className="group">
-                <summary className="text-xs text-gray-500 cursor-pointer hover:text-[var(--sf-blue)] select-none">
-                  Advanced options
-                </summary>
-                <div className="mt-3 space-y-3 pt-3 border-t border-gray-100">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Client Secret <span className="text-gray-400 font-normal">(optional)</span>
-                    </label>
-                    <input
-                      type="password"
-                      value={clientSecret}
-                      onChange={(e) => setClientSecret(e.target.value)}
-                      placeholder="Leave blank if not required"
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[var(--sf-blue)] focus:border-transparent outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      IDP Config Name <span className="text-gray-400 font-normal">(optional)</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={idpConfigName}
-                      onChange={(e) => setIdpConfigName(e.target.value)}
-                      placeholder="e.g. Medico_Invoice_Extractor"
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[var(--sf-blue)] focus:border-transparent outline-none"
-                    />
-                  </div>
+              {authLoading ? (
+                <div className="w-full px-8 py-4 bg-[var(--sf-blue)] text-white font-semibold rounded-xl flex items-center justify-center gap-3 shadow-lg">
+                  <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Waiting for Salesforce login...
                 </div>
-              </details>
+              ) : (
+                <button
+                  onClick={startAuth}
+                  className="w-full px-8 py-4 bg-[var(--sf-blue)] text-white font-bold rounded-xl hover:bg-[var(--sf-blue-dark)] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-3 text-lg"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  Login with Salesforce
+                </button>
+              )}
 
-              <div className="pt-2">
-                {authLoading ? (
-                  <div className="w-full px-6 py-3 bg-[var(--sf-blue)]/80 text-white font-semibold rounded-lg flex items-center justify-center gap-3">
-                    <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Waiting for Salesforce login...
-                  </div>
-                ) : (
-                  <button
-                    onClick={startAuth}
-                    disabled={!loginUrl || !clientId}
-                    className="w-full px-6 py-3 bg-[var(--sf-blue)] text-white font-semibold rounded-lg hover:bg-[var(--sf-blue-dark)] transition-colors shadow-md disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                    Login with Salesforce
-                  </button>
-                )}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+                <p className="text-sm text-blue-900 font-medium mb-2">
+                  <svg className="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  First time setup?
+                </p>
+                <p className="text-xs text-blue-800 leading-relaxed">
+                  You'll need a Salesforce org with Data Cloud and Einstein AI enabled.
+                  If you don't have a Connected App set up, <Link href="#setup-guide" className="underline font-medium">follow our quick setup guide</Link>.
+                </p>
               </div>
-
-              <p className="text-xs text-gray-400 text-center">
-                Salesforce login opens in a new window. Credentials are saved locally in your browser.
-              </p>
             </div>
+
+            <p className="text-xs text-gray-500 mt-6">
+              Secure OAuth 2.0 authentication • Your credentials never touch our servers
+            </p>
           </div>
         </div>
       )}
@@ -475,27 +461,66 @@ export default function ExtractPage() {
               </div>
 
               <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-                <h3 className="font-semibold text-[var(--sf-navy)] mb-3">LLM Model</h3>
-                {idpConfigName && (
-                  <label className="flex items-center gap-2 mb-3 text-sm">
-                    <input type="checkbox" checked={useIdpConfig} onChange={(e) => setUseIdpConfig(e.target.checked)} className="rounded border-gray-300" />
-                    <span>Use IDP Config: <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{idpConfigName}</code></span>
-                  </label>
-                )}
-                {!useIdpConfig && (
-                  <div className="space-y-2">
-                    {LLM_MODELS.map((m) => (
-                      <label key={m.id} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                        model === m.id ? "border-[var(--sf-blue)] bg-blue-50" : "border-gray-200 hover:bg-gray-50"
-                      }`}>
-                        <input type="radio" name="model" value={m.id} checked={model === m.id} onChange={() => setModel(m.id)} className="text-[var(--sf-blue)]" />
-                        <div>
-                          <span className="text-sm font-medium">{m.label}</span>
-                          {m.note && <span className="text-xs text-gray-400 ml-2">{m.note}</span>}
-                        </div>
-                      </label>
-                    ))}
+                <h3 className="font-semibold text-[var(--sf-navy)] mb-3">Configuration</h3>
+
+                {loadingConfigs && (
+                  <div className="text-center py-4">
+                    <svg className="animate-spin w-5 h-5 text-[var(--sf-blue)] mx-auto" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <p className="text-xs text-gray-500 mt-2">Loading configurations...</p>
                   </div>
+                )}
+
+                {!loadingConfigs && idpConfigs.length > 0 && (
+                  <div className="mb-4">
+                    <label className="flex items-center gap-2 mb-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={useIdpConfig}
+                        onChange={(e) => setUseIdpConfig(e.target.checked)}
+                        className="rounded border-gray-300 text-[var(--sf-blue)]"
+                      />
+                      <span className="font-medium">Use IDP Configuration</span>
+                    </label>
+                    {useIdpConfig && (
+                      <select
+                        value={selectedIdpConfig}
+                        onChange={(e) => setSelectedIdpConfig(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[var(--sf-blue)] focus:border-transparent outline-none"
+                      >
+                        {idpConfigs.map((config) => (
+                          <option key={config} value={config}>{config}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                )}
+
+                {!loadingConfigs && idpConfigs.length === 0 && !useIdpConfig && (
+                  <div className="text-xs text-gray-400 mb-3 p-2 bg-gray-50 rounded">
+                    No IDP configurations found. Using custom schema.
+                  </div>
+                )}
+
+                {!useIdpConfig && (
+                  <>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">LLM Model</label>
+                    <div className="space-y-2">
+                      {LLM_MODELS.map((m) => (
+                        <label key={m.id} className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                          model === m.id ? "border-[var(--sf-blue)] bg-blue-50" : "border-gray-200 hover:bg-gray-50"
+                        }`}>
+                          <input type="radio" name="model" value={m.id} checked={model === m.id} onChange={() => setModel(m.id)} className="text-[var(--sf-blue)]" />
+                          <div>
+                            <span className="text-sm font-medium">{m.label}</span>
+                            {m.note && <span className="text-xs text-gray-400 ml-2">{m.note}</span>}
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -527,9 +552,12 @@ export default function ExtractPage() {
               {useIdpConfig ? (
                 <div className="flex-1 flex items-center justify-center text-center p-8">
                   <div>
+                    <svg className="w-12 h-12 text-green-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                     <p className="text-sm text-gray-500 mb-1">Using IDP Configuration</p>
-                    <code className="text-sm font-mono bg-gray-100 px-3 py-1.5 rounded-lg">{idpConfigName}</code>
-                    <p className="text-xs text-gray-400 mt-3">Schema is managed in your Salesforce org</p>
+                    <code className="text-sm font-mono bg-gray-100 px-3 py-1.5 rounded-lg">{selectedIdpConfig}</code>
+                    <p className="text-xs text-gray-400 mt-3">Schema is pre-configured in your Salesforce org</p>
                   </div>
                 </div>
               ) : (
@@ -636,6 +664,75 @@ export default function ExtractPage() {
           )}
         </div>
       )}
+
+      {/* Setup Guide Section */}
+      <div id="setup-guide" className="mt-16 scroll-mt-20">
+        <div className="bg-gradient-to-br from-[var(--sf-navy)] to-[var(--sf-blue)] rounded-2xl p-8 text-white shadow-xl">
+          <h2 className="text-3xl font-bold mb-4">Quick Setup Guide</h2>
+          <p className="text-blue-100 mb-6">
+            Get started with Document AI in 5 minutes. Follow these steps to set up your Salesforce External Client App.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center shrink-0 font-bold">1</div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Enable Einstein AI</h3>
+                  <p className="text-sm text-blue-100 leading-relaxed">
+                    Go to <strong>Setup</strong> → Search <strong>"Einstein Setup"</strong> → Toggle <strong>"Turn on Einstein"</strong>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center shrink-0 font-bold">2</div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Create External Client App</h3>
+                  <p className="text-sm text-blue-100 leading-relaxed">
+                    Go to <strong>Setup</strong> → Search <strong>"External Client App Manager"</strong> → Click <strong>"New"</strong>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center shrink-0 font-bold">3</div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Configure OAuth Settings</h3>
+                  <ul className="text-sm text-blue-100 space-y-1">
+                    <li>• Enable: <strong>Authorization Code and Credentials Flow</strong></li>
+                    <li>• Callback URL: <code className="bg-black/20 px-1.5 py-0.5 rounded text-xs">{typeof window !== 'undefined' ? window.location.origin : 'https://your-domain'}/auth/callback</code></li>
+                    <li>• Scopes: <code className="bg-black/20 px-1.5 py-0.5 rounded text-xs">api, cdp_api, refresh_token</code></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center shrink-0 font-bold">4</div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Save & Configure</h3>
+                  <p className="text-sm text-blue-100 leading-relaxed">
+                    Save the app and copy your <strong>Client ID</strong>. You'll need it when you click "Login with Salesforce" above.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 bg-black/20 rounded-lg p-4">
+            <p className="text-sm text-blue-100">
+              <strong>💡 Pro Tip:</strong> Set the <code className="bg-black/20 px-1.5 py-0.5 rounded text-xs">NEXT_PUBLIC_SF_CLIENT_ID</code> environment variable
+              to avoid entering your Client ID manually each time. <Link href="https://github.com/akshatasawant9699/document-ai-lab#setup" className="underline hover:text-white" target="_blank">View full setup guide →</Link>
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Python Code Reference Section */}
       <div className="mt-12 border-t border-gray-200 pt-8">

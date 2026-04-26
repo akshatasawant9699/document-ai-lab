@@ -73,11 +73,40 @@ Built-in chatbot (bottom-right corner) that answers questions about:
 ### Prerequisites
 
 - **Salesforce Org** with Data Cloud and Einstein AI enabled
-- **External Client App** configured in Salesforce (for the Try It section)
+- **External Client App** configured in Salesforce (see setup below)
+
+### Quick Setup (5 minutes)
+
+#### 1. Enable Einstein AI in Your Org
+
+1. Go to **Setup** → Search for **"Einstein Setup"**
+2. Click **"Turn on Einstein"**
+3. Accept the terms of service
+4. Wait 5-10 minutes for provisioning
+
+#### 2. Create External Client App
+
+1. Go to **Setup** → Search for **"External Client App Manager"**
+2. Click **"New External Client App"**
+3. Fill in:
+   - **Name:** Document AI Testbed (or any name)
+   - **Distribution State:** Local
+4. Under **OAuth Settings**:
+   - Enable **"Authorization Code and Credentials Flow"**
+   - **Callback URL:** `https://document-ai-lab.vercel.app/auth/callback` (or `http://localhost:3000/auth/callback` for local)
+   - **OAuth Scopes:** `api`, `cdp_api`, `refresh_token`
+5. Save and copy your **Client ID**
+
+#### 3. Use the Try It Section
+
+Visit [document-ai-lab.vercel.app/python-app](https://document-ai-lab.vercel.app/python-app) and:
+
+1. Click **"Login with Salesforce"**
+2. Enter your **Client ID** when prompted (or set `NEXT_PUBLIC_SF_CLIENT_ID` env variable)
+3. Authenticate in the popup window
+4. Upload a document and extract data!
 
 ### Using the Portal
-
-Visit [document-ai-lab.vercel.app](https://document-ai-lab.vercel.app) and:
 
 1. **Start with Recipe 1** to set up Document AI in your org
 2. **Download sample documents** from the Samples page
@@ -91,10 +120,30 @@ Visit [document-ai-lab.vercel.app](https://document-ai-lab.vercel.app) and:
 git clone https://github.com/akshatasawant9699/document-ai-lab.git
 cd document-ai-lab
 npm install
+
+# Optional: Configure environment variables
+cp .env.local.example .env.local
+# Edit .env.local and add your Salesforce Client ID
+
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+#### Environment Variables
+
+Create a `.env.local` file (see `.env.local.example`):
+
+```bash
+# Your Salesforce External Client App Client ID
+NEXT_PUBLIC_SF_CLIENT_ID=your_client_id_here
+
+# Salesforce Login URL (default: https://login.salesforce.com)
+NEXT_PUBLIC_SF_LOGIN_URL=https://login.salesforce.com
+
+# Optional: OpenAI API Key for enhanced chatbot
+OPENAI_API_KEY=
+```
 
 ---
 
