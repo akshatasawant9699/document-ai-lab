@@ -188,16 +188,22 @@ export default function ExtractPage() {
     const pollTimer = setInterval(() => {
       if (popup.closed) {
         clearInterval(pollTimer);
-        const savedAuth = localStorage.getItem("docai_auth");
-        if (savedAuth && !authenticated) {
-          try {
-            const authData = JSON.parse(savedAuth);
-            setAuth(authData);
-            setAuthenticated(true);
-            fetchIdpConfigs(authData);
-          } catch { /* ignore */ }
-        }
-        setAuthLoading(false);
+        setTimeout(() => {
+          const savedAuth = localStorage.getItem("docai_auth");
+          if (savedAuth && !authenticated) {
+            try {
+              const authData = JSON.parse(savedAuth);
+              setAuth(authData);
+              setAuthenticated(true);
+              fetchIdpConfigs(authData);
+            } catch (e) {
+              console.error("Error parsing auth data:", e);
+            }
+          } else if (!savedAuth) {
+            setError("Authentication was not completed. Please try again.");
+          }
+          setAuthLoading(false);
+        }, 500); // Give a small delay for localStorage to update
       }
     }, 500);
   };

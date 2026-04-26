@@ -15,6 +15,9 @@ export default function AuthCallback() {
     const code = params.get("code");
     const errorParam = params.get("error");
 
+    console.log("Auth callback - code:", code ? "received" : "missing");
+    console.log("Auth callback - error:", errorParam);
+
     if (errorParam) {
       queueMicrotask(() => {
         setStatus("error");
@@ -31,18 +34,18 @@ export default function AuthCallback() {
       return;
     }
 
-    const saved = localStorage.getItem("docai_login");
     const verifier = localStorage.getItem("docai_pkce_verifier") || "";
+    const clientId = localStorage.getItem("docai_client_id") || "";
+    const loginUrl = "https://login.salesforce.com"; // Default login URL
 
-    if (!saved) {
+    if (!clientId) {
       queueMicrotask(() => {
         setStatus("error");
-        setMessage("Login configuration not found. Please try again.");
+        setMessage("Client ID not found. Please try logging in again.");
       });
       return;
     }
 
-    const cfg = JSON.parse(saved);
     const redirectUri = window.location.origin + "/auth/callback";
 
     fetch("/api/auth", {
@@ -52,13 +55,15 @@ export default function AuthCallback() {
         code,
         codeVerifier: verifier,
         redirectUri,
-        loginUrl: cfg.loginUrl,
-        clientId: cfg.clientId,
-        clientSecret: cfg.clientSecret,
+        loginUrl: loginUrl,
+        clientId: clientId,
+        clientSecret: "", // Not using client secret with PKCE
       }),
     })
       .then((r) => r.json())
       .then((data) => {
+        console.log("Token exchange response:", data.access_token ? "success" : "failed");
+
         if (data.access_token) {
           const authData = {
             accessToken: data.access_token,
@@ -66,20 +71,26 @@ export default function AuthCallback() {
           };
 
           localStorage.setItem("docai_auth", JSON.stringify(authData));
+          console.log("Saved auth to localStorage");
 
           if (window.opener) {
             window.opener.postMessage({ type: "docai_auth_success", auth: authData }, window.location.origin);
+            console.log("Sent message to opener");
+          } else {
+            console.warn("No window.opener found");
           }
 
           setStatus("success");
           setMessage("Authenticated successfully! This window will close.");
           setTimeout(() => window.close(), 1500);
         } else {
+          console.error("Token exchange failed:", data.error);
           setStatus("error");
           setMessage(data.error || "Token exchange failed.");
         }
       })
       .catch((e) => {
+        console.error("Token exchange error:", e);
         setStatus("error");
         setMessage(e.message || "Authentication failed.");
       });
