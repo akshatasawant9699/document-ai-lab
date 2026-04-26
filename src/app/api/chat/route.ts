@@ -144,5 +144,5 @@ function buildLocalAnswer(query: string, sections: string[]): string {
 
   const content = sections.slice(0, 2).join("\n\n---\n\n");
 
-  return intro + content + "\n\n*This answer is from the Document AI knowledge base. For AI-powered answers with conversation context, set the `OPENAI_API_KEY` environment variable.*";
+  return intro + content;
 }
