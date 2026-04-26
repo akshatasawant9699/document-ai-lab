@@ -406,15 +406,42 @@ export function searchPRD(query: string): string[] {
   const lower = query.toLowerCase();
   const keywords = lower.split(/\s+/).filter((w) => w.length > 2);
 
+  // Special case: if asking "what is document ai" or general overview questions
+  if (
+    (lower.includes("what is document ai") ||
+     lower.includes("what is doc ai") ||
+     (lower.includes("what") && lower.includes("document") && lower.includes("ai") && lower.includes("do"))) &&
+    lower.split(" ").length < 15
+  ) {
+    const overview = PRD_SECTIONS.find(s => s.title === "Document AI Overview");
+    if (overview) {
+      return [`## ${overview.title}\n${overview.content}`];
+    }
+  }
+
   const scored = PRD_SECTIONS.map((section) => {
     const text = (section.title + " " + section.content).toLowerCase();
     let score = 0;
-    for (const kw of keywords) {
-      const regex = new RegExp(kw, "g");
-      const matches = text.match(regex);
-      if (matches) score += matches.length;
+
+    // Boost score for title matches
+    if (lower.includes(section.title.toLowerCase())) score += 20;
+
+    // Boost score for overview section on general questions
+    if (section.title === "Document AI Overview" &&
+        (lower.includes("what is") || lower.includes("overview") || lower.includes("about"))) {
+      score += 15;
     }
-    if (lower.includes(section.title.toLowerCase())) score += 10;
+
+    // Score based on keyword matches
+    for (const kw of keywords) {
+      // Skip common words that don't add value
+      if (["what", "how", "can", "the", "and", "for"].includes(kw)) continue;
+
+      const regex = new RegExp(`\\b${kw}`, "gi");
+      const matches = text.match(regex);
+      if (matches) score += matches.length * 2;
+    }
+
     return { section, score };
   });
 

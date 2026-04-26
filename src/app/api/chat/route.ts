@@ -118,7 +118,11 @@ function buildLocalAnswer(query: string, sections: string[]): string {
   const lower = query.toLowerCase();
 
   let intro = "";
-  if (lower.includes("model") || lower.includes("gemini") || lower.includes("gpt") || lower.includes("claude")) {
+
+  // Check for overview/what is questions first
+  if (lower.includes("what is") || (lower.includes("overview") && !lower.includes("error")) || lower.includes("about document ai")) {
+    intro = "";  // No intro needed, the section title will be clear
+  } else if (lower.includes("model") || lower.includes("gemini") || lower.includes("gpt") || lower.includes("claude")) {
     intro = "Here's what I found about **LLM Models**:\n\n";
   } else if (lower.includes("api") || lower.includes("endpoint") || lower.includes("rest")) {
     intro = "Here's the **API information** I found:\n\n";
@@ -139,7 +143,7 @@ function buildLocalAnswer(query: string, sections: string[]): string {
   } else if (lower.includes("use case") || lower.includes("example") || lower.includes("invoice") || lower.includes("resume")) {
     intro = "Here's what I found about **Use Cases and Examples**:\n\n";
   } else {
-    intro = "Here's what I found:\n\n";
+    intro = "";  // Let the section title speak for itself
   }
 
   const content = sections.slice(0, 2).join("\n\n---\n\n");
