@@ -1,259 +1,404 @@
 export const PRD_SECTIONS = [
   {
-    title: "Executive Summary",
-    content: `Document AI - Feature Proposal Package, 262 Release Enhancement.
-This proposal introduces three strategic enhancements to Document AI that address critical customer blockers, reduce friction, and improve product stability. These features build upon existing 262 commitments and directly support the goal of scaling from 22 to 100+ production tenants.
-
-Proposal Impact:
-- Unblocks 8+ named enterprise customers (Aviva, Astra Zeneca, Zurich, Health Cloud, etc.)
-- Reduces customer processing costs by 30-50% through intelligent controls
-- Accelerates time-to-production by enabling safer configuration iteration
-- Improves trust and accuracy validation through visual feedback
-
-The three features are:
-1. Smart Page Processing Controls (Deal Breaker Extension)
-2. Configuration Lifecycle Management with Versioning (Hygiene Enhancement)
-3. Enhanced Visual Citations with Confidence Overlay (UX/Hygiene)`,
-  },
-  {
-    title: "Feature 1: Smart Page Processing Controls",
-    content: `Category: Functional | Priority: Deal Breaker Extension.
-Related PRD Feature: Sparse/Long Document Handling.
-
-Problem Statement:
-Current Document AI processes entire documents without customer control, creating three critical challenges:
-1. Cost Uncertainty: Customers processing 40-50+ page documents (loan applications, medical records, contracts) cannot control AI processing costs
-2. Performance Issues: Processing irrelevant pages wastes resources
-3. Context Window Limitations: Large documents exceed LLM context windows
-
-Blocked Customers: Aviva, Astra Zeneca, IQ Commercial Mortgage, Holchim, Tata AIG, Liberty Finance
+    title: "Document AI Overview",
+    content: `Document AI is a Salesforce Data Cloud feature that uses Large Language Models (LLMs) to extract structured data from unstructured documents like PDFs, images, and scanned files.
 
 Key Capabilities:
-- Configurable Page Limits: Set maximum pages per document at Org or Configuration level (default: 50, max: 100)
-- Intelligent Page Selection Strategies: First N Pages, Last N Pages, First & Last Pages, Custom Page Ranges, Smart Sampling (Future 264)
-- LLM Context Window Configuration: Small (4K), Medium (16K), Large (32K), Extra Large (128K tokens)
-- Processing Cost Dashboard: Analytics for token usage, page count, and cost projection
+- Extract structured data from PDFs, images, and scanned documents
+- Support for multiple document types: invoices, forms, contracts, medical records, resumes
+- AI-powered field detection with confidence scores
+- Visual schema builder with no-code configuration
+- REST API for programmatic access
+- Integration with Salesforce Flows, Apex, and Agentforce
 
-Success Metrics:
-- 30-50% reduction in processing costs for customers with 20+ page documents
-- 60%+ of customers configure custom page limits within 30 days
-- <5% accuracy degradation vs. full document processing
-- 40%+ reduction in average processing time for large documents`,
+Use Cases:
+- Invoice and receipt processing
+- Form data extraction
+- Contract analysis and key term identification
+- Medical records processing
+- Resume and application screening
+- Identity document verification`,
   },
   {
-    title: "Page Processing API Changes",
-    content: `Request Enhancement for page processing:
+    title: "Supported LLM Models",
+    content: `Document AI supports multiple state-of-the-art LLM models for document extraction, each with different strengths:
+
+Supported Models:
+- **Gemini 2.0 Flash** (llmgateway__VertexAIGemini20Flash001) - Recommended for PDFs, fast processing, good accuracy
+- **Gemini 2.5 Flash** (llmgateway__VertexAIGemini25Flash) - Latest Gemini model with improved accuracy
+- **GPT-4o** (llmgateway__OpenAIGPT4Omni_08_06) - Excellent for OCR, handwriting, and complex layouts
+- **GPT-4.1** (llmgateway__OpenAIGPT41) - Recommended for Prompt Templates
+- **Claude 3.7 Sonnet** (llmgateway__AnthropicClaude37Sonnet) - Strong reasoning for complex documents
+- **Amazon Nova Pro** (llmgateway__AmazonNovaPro) - Cost-effective option
+- **BYOLLM** - Bring your own LLM via Einstein Studio for custom models
+
+Model Selection Guidelines:
+- Use Gemini 2.0 Flash for standard PDFs and forms
+- Use GPT-4o for handwritten documents or poor-quality scans
+- Use Claude for documents requiring contextual understanding
+- Test multiple models to find the best fit for your use case`,
+  },
+  {
+    title: "Document AI REST API",
+    content: `The Document AI REST API allows you to programmatically extract data from documents.
+
+API Endpoint:
+POST /services/data/v63.0/ssot/document-processing/actions/extract-data
+
+Query Parameters:
+- htmlEncode=false - Prevent HTML entity encoding in response
+- extractDataWithConfidenceScore=true - Include confidence scores for each field
+
+Request Headers:
+- Authorization: Bearer <access_token>
+- Content-Type: application/json
+
+Request Body (Inline Schema):
 {
-  "documentId": "abc123",
-  "schemaId": "schema_loan_app",
-  "pageConfig": {
-    "maxPages": 30,
-    "strategy": "FIRST_LAST",
-    "firstPages": 5,
-    "lastPages": 2,
-    "contextWindow": "LARGE_32K"
+  "documentInBase64": "<base64_encoded_document>",
+  "mimeType": "application/pdf",
+  "llmModelName": "llmgateway__VertexAIGemini20Flash001",
+  "extractionSchemaInJson": {
+    "fields": [
+      {"name": "invoice_number", "type": "string", "description": "Invoice number"},
+      {"name": "total_amount", "type": "number", "description": "Total invoice amount"}
+    ]
   }
 }
 
-Response Enhancement:
+Request Body (Using IDP Configuration):
 {
-  "status": "SUCCESS",
-  "extractedData": {...},
-  "processingMetadata": {
-    "totalPages": 52,
-    "pagesProcessed": 7,
-    "pageRanges": ["1-5", "51-52"],
-    "tokensUsed": 28500,
-    "contextWindow": "LARGE_32K",
-    "warnings": ["Document exceeds page limit."]
+  "documentInBase64": "<base64_encoded_document>",
+  "idpConfigurationIdOrName": "Invoice_Extraction_Config"
+}
+
+Response includes extracted data with confidence scores (0.0 to 1.0) for each field.`,
+  },
+  {
+    title: "Authentication",
+    content: `Document AI uses OAuth 2.0 for authentication. You must create an External Client App (not a Connected App) in Salesforce.
+
+Setup Steps:
+1. In Setup, search for "External Client Apps"
+2. Click "New" to create an External Client App
+3. Enter App Name and Description
+4. Add callback URL (e.g., http://localhost:3000/auth/callback)
+5. Select OAuth Scopes: api, refresh_token, offline_access
+6. Enable PKCE (Proof Key for Code Exchange) for enhanced security
+7. Save and note your Client ID
+
+OAuth 2.0 Flow:
+1. Authorization Request: Redirect user to Salesforce login with client_id, redirect_uri, and code_challenge
+2. Authorization Code: Salesforce redirects back with authorization code
+3. Token Exchange: Exchange code for access token using client_id, code, and code_verifier
+4. API Calls: Include access token in Authorization header
+
+PKCE Parameters:
+- code_challenge: Base64 URL-encoded SHA-256 hash of code_verifier
+- code_challenge_method: S256
+- code_verifier: Cryptographically random string (43-128 characters)
+
+Prerequisites:
+- Einstein AI features must be enabled in your org
+- Data Cloud must be provisioned
+- User must have appropriate permissions`,
+  },
+  {
+    title: "Schema Design Best Practices",
+    content: `Effective schema design is crucial for accurate document extraction. Follow these best practices:
+
+Schema Structure:
+- Maximum 50 fields at root level
+- Table extraction supports 1 level of nesting
+- Use clear, descriptive field names
+- Include detailed field descriptions to guide the LLM
+
+Field Descriptions:
+- Be specific: "Invoice number in format INV-YYYY-####" instead of "Invoice number"
+- Include context: "Total amount including tax" vs "Total amount"
+- Specify format: "Date in MM/DD/YYYY format"
+- Mention location: "Patient name from header section"
+
+Data Types:
+- string: Text values (names, addresses, IDs)
+- number: Numeric values (amounts, quantities, percentages)
+- boolean: Yes/No or True/False values
+- array: Lists of items (line items, medications, test results)
+- object: Nested structures
+
+Table Extraction:
+- Define array fields for repeating data (invoice line items, prescriptions)
+- Specify column names clearly in nested field definitions
+- Include descriptions for each column
+- Test with documents containing various table sizes
+
+Tips for Accuracy:
+- Start with fewer fields and add more iteratively
+- Test with multiple sample documents
+- Review confidence scores to identify problematic fields
+- Refine field descriptions based on extraction results
+- Use examples in descriptions when helpful`,
+  },
+  {
+    title: "Confidence Scores",
+    content: `Document AI returns confidence scores for each extracted field, indicating the LLM's certainty about the extraction accuracy.
+
+Confidence Score Range: 0.0 to 1.0 (or 0% to 100%)
+
+Interpretation Guidelines:
+- **High (≥ 0.9 or 90%)**: Very reliable, safe for automated workflows
+- **Medium (0.7 - 0.89 or 70-89%)**: Generally accurate, consider human review for critical fields
+- **Low (< 0.7 or <70%)**: Requires review, may indicate unclear documents or schema issues
+
+Enabling Confidence Scores:
+Add query parameter to API request: ?extractDataWithConfidenceScore=true
+
+Response Format:
+{
+  "extractedData": {
+    "invoice_number": "INV-2026-001",
+    "total_amount": 1234.56
+  },
+  "confidenceScores": {
+    "invoice_number": 0.98,
+    "total_amount": 0.85
   }
 }
 
-When document exceeds limit: Process first N pages + return warning in API response.
-Confidence scores adjusted based on partial processing.`,
+Best Practices:
+- Set minimum confidence thresholds for automated processing
+- Route low-confidence extractions to human review queues
+- Monitor confidence trends to identify schema improvements
+- Test with various document qualities to understand typical scores
+- Use confidence scores to prioritize schema refinement efforts
+
+Factors Affecting Confidence:
+- Document quality (resolution, clarity, scan quality)
+- Field description specificity in schema
+- Document layout consistency
+- LLM model selection
+- Presence of expected data patterns`,
   },
   {
-    title: "Page Selection Strategies",
-    content: `Five page selection strategies:
-1. First N Pages (default): Process pages 1 through N. Use case: Invoices, forms with standardized layouts.
-2. Last N Pages: Process final N pages. Use case: Signature pages, appendices.
-3. First & Last Pages: Process first X + last Y pages. Example: First 5 + Last 2 pages. Use case: Contracts (header info + signature pages).
-4. Custom Page Ranges: Specify exact pages like "1-5, 10-12, 45-50". Use case: Known document structures.
-5. Smart Sampling (Future - 264): AI-driven relevant page detection. Samples pages based on schema requirements. Use case: Sparse documents with unknown key data locations.
+    title: "Supported File Types and Limits",
+    content: `Document AI supports various file formats and has specific limitations you should be aware of.
 
-LLM Context Window sizes:
-- Small (4K tokens): Fast, low-cost, suitable for 1-3 page documents
-- Medium (16K tokens): Balanced, suitable for 5-15 page documents
-- Large (32K tokens): Comprehensive, suitable for 15-30 page documents
-- Extra Large (128K tokens): Maximum accuracy, suitable for 30-50+ page documents`,
+Supported File Types:
+- **PDF** (.pdf) - Portable Document Format, recommended for best results
+- **PNG** (.png) - Portable Network Graphics
+- **JPG/JPEG** (.jpg, .jpeg) - Joint Photographic Experts Group
+- **TIFF** (.tiff, .tif) - Tagged Image File Format
+- **BMP** (.bmp) - Bitmap Image File
+
+Document Limits:
+- Maximum 50 fields at root schema level
+- Table extraction supports 1 level of nesting
+- Recommended page limit: Up to 25 pages for optimal performance
+- Large documents (50+ pages) may experience longer processing times
+- File size limits depend on Salesforce API limits (typically up to 35MB base64 encoded)
+
+Best Practices:
+- Use PDF format when possible for best accuracy
+- Ensure images have sufficient resolution (300 DPI recommended)
+- For multi-page documents, ensure all pages are included in single file
+- Compress images to reduce file size while maintaining readability
+- Test with representative sample documents before production deployment
+
+Image Quality Guidelines:
+- Minimum resolution: 150 DPI
+- Recommended resolution: 300 DPI or higher
+- Ensure text is clearly readable
+- Avoid excessive compression that creates artifacts
+- Use high-contrast documents for better OCR results
+- Straighten skewed or rotated documents before processing`,
   },
   {
-    title: "Feature 2: Configuration Lifecycle Management with Versioning",
-    content: `Category: UX/Functional | Priority: Hygiene Enhancement.
-Related PRD Features: Draft State Support, Collaborative Config Management.
+    title: "Integration with Salesforce",
+    content: `Document AI integrates seamlessly with Salesforce platform features for end-to-end document processing workflows.
 
-Problem Statement:
-1. No Version Control: Configurations cannot be tracked across iterations. No rollback capability.
-2. Lost Configuration History: Teams cannot understand what changed between configurations.
-3. Collaboration Friction: No native versioning to track iterations.
-4. Risk of Breaking Changes: Customers fear publishing changes without ability to revert.
+Apex Integration:
+- Use @InvocableMethod to create Apex actions callable from Flows
+- Make HTTP callouts to Document AI REST API
+- Parse JSON responses and create/update Salesforce records
+- Handle errors and implement retry logic
+- Use Named Credentials for authentication management
 
-Blocked Customers: Zurich (Deal Breaker), CMS-Medicare, and all customers in iterative testing phases.
+Flow Integration:
+- Create Screen Flows with file upload components
+- Call Apex actions to extract document data
+- Display extraction results for user review
+- Update records based on extracted data
+- Implement approval workflows
 
-Key Capabilities:
-- Schema Versioning: Every "Save & Publish" creates immutable, sequentially numbered version (v1, v2, v3).
-- Version Metadata: version number, timestamp, created by user, change notes, full schema snapshot, test results.
-- Version States: Draft (editable), Active (in production, one at a time), Archived (previous versions).
-- Rollback Capability: Select archived version to create new active version. Maintains complete audit trail.
-- Version Comparison: Side-by-side diff showing fields added/removed/modified, prompt changes, metadata changes.
+Agentforce Integration:
+- Create Agent Topics for document processing
+- Define Actions that invoke Document AI extraction
+- Configure autonomous processing rules
+- Enable agents to extract, validate, and store document data
+- Use Data Cloud connectors for batch processing
 
-Limits: Maximum 50 versions per configuration. Active and last 10 versions cannot be purged.
+Data Cloud Integration:
+- Set up Unstructured Data Lake Objects (UDLO)
+- Connect Google Cloud Storage or AWS S3
+- Configure batch document ingestion
+- Map extracted data to Data Model Objects (DMOs)
+- Use in Data Cloud segments and insights
 
-Success Metrics:
-- 70%+ of active configurations have 3+ versions
-- 15-20% of configurations use rollback at least once
-- 40% reduction in time-to-production for collaborative configurations
-- 80%+ feel confident making changes with rollback safety net`,
+Common Use Cases:
+- Invoice approval workflows with automated data extraction
+- Resume screening for recruiting processes
+- Medical records processing in Healthcare Cloud
+- Contract analysis and clause extraction
+- Identity verification document processing`,
   },
   {
-    title: "Versioning API Changes",
-    content: `Get Configuration (Enhanced):
-GET /api/docai/config/{configId}?version=5
-Returns config with version number, state, createdAt, createdBy, notes, totalVersions, and schema.
+    title: "Error Handling and Troubleshooting",
+    content: `Common errors when working with Document AI and how to resolve them.
 
-Version History Endpoint (New):
-GET /api/docai/config/{configId}/versions
-Returns list of all versions with number, state, createdAt, createdBy, and notes.
+Common HTTP Status Codes:
+- **401 Unauthorized**: Access token expired or invalid. Refresh token and retry.
+- **400 Bad Request**: Invalid request format. Check JSON schema, base64 encoding, and required fields.
+- **403 Forbidden**: User lacks permissions. Verify Einstein AI and Data Cloud are enabled.
+- **500 Internal Server Error**: Temporary service issue. Implement retry with exponential backoff.
+- **504 Gateway Timeout**: Processing took too long. Consider splitting large documents.
 
-Rollback Endpoint (New):
-POST /api/docai/config/{configId}/rollback
-Request: { "targetVersion": 3, "notes": "Rolling back due to accuracy regression" }
-Response: { "configId": "cfg_123", "newVersion": 6, "rolledBackFrom": 5, "rolledBackTo": 3, "state": "ACTIVE" }
+Common Issues:
 
-Rollback creates a NEW version (not true revert). Maintains complete audit trail. Previous active version moves to archived state. All versions preserved (no data loss).
+1. **HTML Entity Encoding in Response**
+   Problem: Response contains &amp;, &lt;, etc.
+   Solution: Add query parameter htmlEncode=false
 
-Integration with Draft State: Draft -> Publish creates Version 1. Subsequent Draft -> Publish creates Version 2, 3, etc.
-Integration with JSON Export/Import: Export includes version number in filename. Import as new configuration starts at v1.`,
+2. **Missing Confidence Scores**
+   Problem: Response doesn't include confidence scores
+   Solution: Add query parameter extractDataWithConfidenceScore=true
+
+3. **Low Extraction Accuracy**
+   Solutions:
+   - Improve field descriptions in schema
+   - Try different LLM models
+   - Ensure document quality is sufficient
+   - Test with clearer sample documents
+
+4. **Fields Not Extracted**
+   Solutions:
+   - Verify field exists in document
+   - Improve field description specificity
+   - Check if field name matches expected data
+   - Review document quality and readability
+
+5. **Authentication Fails**
+   Solutions:
+   - Use External Client App (not Connected App)
+   - Verify Einstein AI features are enabled
+   - Check OAuth scopes include api, refresh_token
+   - Ensure PKCE is properly implemented
+
+Debugging Tips:
+- Start with simple schemas and add complexity iteratively
+- Test with high-quality sample documents first
+- Review confidence scores to identify problem fields
+- Compare results across different LLM models
+- Enable debug logging in your application`,
   },
   {
-    title: "Feature 3: Enhanced Visual Citations with Confidence Overlay",
-    content: `Category: UX | Priority: Hygiene (Promoted from Good to Have).
-Related PRD Features: Visual Citation/Bounding Boxes, Confidence Score UI Display.
+    title: "Getting Started",
+    content: `Follow these steps to start using Document AI in your Salesforce org.
 
-Problem Statement:
-1. Trust Gap: Cannot verify extraction accuracy without manually searching documents.
-2. No Confidence Context: Confidence scores exist in API but not in UI with spatial context.
-3. Debugging Friction: Users cannot see what the AI "saw" or why it failed.
-4. Training Overhead: New users don't understand how prompts relate to document structure.
+Prerequisites:
+- Salesforce org with Data Cloud provisioned
+- Einstein AI features enabled
+- User with appropriate permissions
+- Sample documents for testing
 
-Blocked/Requesting Customers: Health Cloud (explicitly requested), applies to all customers.
+Setup Steps:
 
-Key Capabilities:
-- Interactive Bounding Boxes: Click extracted field to highlight corresponding region in document preview. Color-coded border based on confidence (green >0.9, yellow 0.7-0.9, red <0.7).
-- Confidence Score Visualization: Badge Mode (percentage next to each value), Heat Map Mode (document overlay), Field-Level Warnings (auto-warning for <70% confidence).
-- Annotated Document Export: Export test results as annotated PDF with bounding boxes, field labels, values, and confidence scores.
-- Debugging: Extraction Timeline View, Failed Extraction Analysis with suggestions.
-- Confidence Threshold: Per-schema minimum confidence threshold setting (default 70%).
+1. **Enable Einstein AI**
+   - Go to Setup → Einstein Setup
+   - Enable Einstein AI features
+   - Review and accept terms
 
-Success Metrics:
-- 80%+ of test runs use bounding box visualization
-- 25% reduction in iterations needed to reach production
-- 30% reduction in "extraction not working" support tickets
-- 90%+ rate visual citations as helpful or very helpful`,
+2. **Access Document AI**
+   - Navigate to Data Cloud app
+   - Click on Document AI tab
+   - Or access via App Launcher → Document AI
+
+3. **Create Configuration**
+   - Click "New Configuration"
+   - Enter configuration name and description
+   - Define your extraction schema
+
+4. **Define Schema**
+   - Add fields with names, types, and descriptions
+   - For tables, define array fields with nested structure
+   - Keep descriptions specific and detailed
+
+5. **Select LLM Model**
+   - Choose model based on document type
+   - Gemini 2.0 Flash for standard PDFs
+   - GPT-4o for handwriting/OCR
+
+6. **Test Extraction**
+   - Upload sample document
+   - Review extracted data
+   - Check confidence scores
+   - Refine schema as needed
+
+7. **Activate Configuration**
+   - Once testing is successful, activate the configuration
+   - Use in production via API or Salesforce Flows
+
+For API Integration:
+- Create External Client App in Setup
+- Implement OAuth 2.0 PKCE flow
+- Make POST requests to extraction endpoint
+- Handle responses and confidence scores`,
   },
   {
-    title: "Visual Citations API Changes",
-    content: `Get Extraction Results with Bounding Boxes (Enhanced):
-GET /api/docai/extract/{extractionId}?includeBoundingBoxes=true
-Returns fields with name, value, confidence, and boundingBox (page, coordinates x/y/width/height, vertices).
-Also returns overallConfidence and warnings for low confidence fields.
+    title: "Use Cases and Examples",
+    content: `Real-world use cases and implementation examples for Document AI.
 
-Export Annotated Document (New):
-POST /api/docai/extract/{extractionId}/export
-Request: { "format": "PDF", "includeBoundingBoxes": true, "includeConfidenceScores": true, "includeFieldLabels": true }
-Response: { "exportId": "exp_456", "downloadUrl": "https://...", "expiresAt": "..." }`,
-  },
-  {
-    title: "Cross-Feature Integration",
-    content: `The three features work together synergistically:
+Financial Services:
+- Invoice processing: Extract vendor, amounts, line items, dates
+- Bank statement analysis: Transaction history, account details
+- Loan applications: Income verification, employment data, credit history
+- Insurance claims: Policy numbers, claim amounts, incident details
 
-1. Cost Optimization + Versioning: Version comparison shows token usage changes. Customers can test different page strategies and version the best one. Cost dashboard links to configuration versions.
+Healthcare:
+- Medical records: Patient demographics, diagnoses, medications
+- Lab reports: Test results, reference ranges, abnormal flags
+- Prescriptions: Medications, dosages, patient instructions
+- Insurance forms: Coverage details, authorization numbers
 
-2. Versioning + Visual Citations: Version comparison includes confidence score changes. Track accuracy improvements across versions using bounding box feedback. Annotated exports can be attached to version notes.
+Human Resources:
+- Resume parsing: Skills, experience, education, certifications
+- Employment applications: Contact info, work history, references
+- Onboarding documents: I-9 forms, tax forms, benefits enrollment
+- Performance reviews: Ratings, comments, goals
 
-3. Page Controls + Visual Citations: Bounding boxes show which pages were processed vs. skipped. Confidence scores validate if page selection strategy is optimal. Export annotated documents showing page range decisions.`,
-  },
-  {
-    title: "Implementation Timeline & Resources",
-    content: `Phase 1: 262 Release (Core Features)
-Feature 1 (Smart Page Processing): 18 eng-weeks (3 backend + 2 frontend engineers)
-Feature 2 (Configuration Versioning): 14 eng-weeks (2 backend + 2 frontend engineers)
-Feature 3 (Visual Citations): 14 eng-weeks (1 backend + 3 frontend engineers)
-Phase 1 Total: 46 eng-weeks (~11.5 weeks with 4 engineers parallelized)
+Legal:
+- Contract analysis: Parties, terms, dates, obligations
+- Legal briefs: Case numbers, citations, arguments
+- Court documents: Filing dates, case details, judgments
 
-Phase 2: 264 Release (Advanced Features) - Estimated 25 eng-weeks
-- Smart page sampling (AI-driven)
-- Advanced version comparison and analytics
-- Heat maps and extraction timeline
+Retail/Supply Chain:
+- Purchase orders: Items, quantities, prices, delivery terms
+- Packing slips: Shipment details, tracking numbers
+- Receipts: Transaction details, payment methods
+- Shipping labels: Addresses, package details
 
-Phase 1 deliverables:
-- Feature 1: Org/config-level page limits, First N/Last N/First&Last strategies, basic cost dashboard
-- Feature 2: Version creation on publish, version history view, rollback, basic comparison, JSON export with version info
-- Feature 3: Bounding box visualization, confidence score badges/colors, basic annotated PDF export, confidence threshold warnings`,
-  },
-  {
-    title: "Risk Assessment",
-    content: `Technical Risks:
-1. Page Selection May Reduce Accuracy - Mitigation: Extensive testing, configurable defaults, warnings when data likely missed
-2. Version Storage Growth - Mitigation: 50-version limit, admin purge, lightweight JSON storage
-3. Bounding Box Performance on Large Docs - Mitigation: Lazy loading, render only visible pages, optional toggle
-
-Business Risks:
-1. Customers Set Page Limits Too Low - Mitigation: Smart defaults, warnings, recommendations based on test runs
-2. Version Rollback Creates Data Inconsistency - Mitigation: Rollback only affects future processing, clear warnings, audit trails
-3. Feature Complexity Overwhelms Low-Code Users - Mitigation: Sensible defaults, progressive disclosure, guided setup flows`,
-  },
-  {
-    title: "Customer Validation & Beta Program",
-    content: `Recommended Beta Customers:
-Feature 1 (Page Controls): Primary - Aviva, Astra Zeneca. Secondary - Liberty Finance, Tata AIG.
-Feature 2 (Versioning): Primary - Zurich, CMS-Medicare. Secondary - All iterative testing customers.
-Feature 3 (Visual Citations): Primary - Health Cloud. Secondary - Zurich, Novartis.
-
-Beta Success Criteria:
-- 90%+ of beta customers successfully configure features without support
-- 80%+ report features meet or exceed expectations
-- <5 critical bugs identified
-- Feature adoption rate >60% within beta period`,
-  },
-  {
-    title: "Competitive Analysis",
-    content: `AWS Textract: Has bounding boxes and confidence scores. Missing page selection strategies and versioning. Our advantage: Superior configuration management.
-
-Google Document AI: Has bounding boxes and page limits. Missing version control and rollback. Our advantage: Better collaboration and iteration support.
-
-Microsoft Azure Form Recognizer: Has confidence scores and model versioning. Missing visual UI for citations and flexible page strategies. Our advantage: No-code experience, visual debugging.
-
-Salesforce Differentiators: Native integration with Salesforce platform, collaborative configuration management, visual low-code experience, version control with rollback safety.`,
-  },
-  {
-    title: "Document AI General Knowledge",
-    content: `Document AI is a Salesforce Data Cloud feature that uses LLMs to extract structured data from unstructured documents (PDFs, images, scanned files).
-
-Core API endpoint: POST /services/data/v63.0/ssot/document-processing/actions/extract-data
-Supports: PDF, PNG, JPG, JPEG, TIFF, BMP files.
-Max 50 fields extractable per document schema at root DLO level.
-Table extraction supports one level of nesting.
-
-Supported LLM Models: Gemini 2.0 Flash (recommended for PDFs), Gemini 2.5 Flash, GPT-4o (supports OCR), GPT-4.1 (recommended for Prompt Templates), Claude variants, Amazon Nova, NVIDIA Nemotron, BYOLLM via Einstein Studio.
-
-Three processing modalities: API (real-time/transactional), Batch (via UDLO from AWS S3 or GCS), and RAG with Agentforce.
-
-Authentication: OAuth 2.0 via External Client App (not Connected App). Requires Einstein AI features enabled in the org.
-
-Current GA features: Visual Schema Builder UI, AI-powered field detection, built-in testing, simplified 2-parameter API payload with idpConfigurationIdOrName.
-
-Known limitations: PDFs >250 pages not feasible for transactional calls (async endpoint planned for release 264). LLM non-determinism acknowledged as known issue.`,
+Example Schema (Invoice):
+{
+  "fields": [
+    {"name": "invoice_number", "type": "string"},
+    {"name": "date", "type": "string"},
+    {"name": "total", "type": "number"},
+    {"name": "line_items", "type": "array", "fields": [
+      {"name": "description", "type": "string"},
+      {"name": "quantity", "type": "number"},
+      {"name": "unit_price", "type": "number"}
+    ]}
+  ]
+}`,
   },
 ];
 

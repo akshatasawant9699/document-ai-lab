@@ -1,22 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PRD_SECTIONS, searchPRD } from "@/lib/prd-knowledge";
 
-const SYSTEM_PROMPT = `You are the Document AI Assistant, an expert on Salesforce Data Cloud Document AI. You help developers and product teams understand Document AI features, capabilities, APIs, and the upcoming 262 Release enhancements.
+const SYSTEM_PROMPT = `You are the Document AI Assistant, an expert on Salesforce Data Cloud Document AI. You help developers understand and implement Document AI features.
 
 You have deep knowledge of:
-- Document AI's current capabilities (extraction API, schemas, LLM models, authentication)
-- The 262 Release Feature Proposal Package with 3 strategic enhancements:
-  1. Smart Page Processing Controls (page limits, selection strategies, context windows)
-  2. Configuration Lifecycle Management with Versioning (version control, rollback, comparison)
-  3. Enhanced Visual Citations with Confidence Overlay (bounding boxes, confidence UI, annotated export)
-- Implementation timelines, customer blockers, API changes, and competitive analysis
+- Document AI's capabilities (extraction API, schemas, LLM models, authentication)
+- REST API endpoints and request/response formats
+- Schema design best practices and field configuration
+- Supported LLM models (Gemini, GPT-4o, Claude, etc.)
+- OAuth 2.0 authentication with PKCE
+- Confidence scores and interpretation
+- Integration with Salesforce (Apex, Flows, Agentforce)
+- Supported file types and limitations
+- Error handling and troubleshooting
 
 Rules:
 - Answer based on the provided context first. If the context doesn't cover the question, use your general knowledge about Salesforce and Document AI.
 - Be concise but thorough. Use bullet points for lists.
-- When referencing specific features, mention which of the 3 features they belong to.
-- If you genuinely don't know, say so and suggest where to look.
-- Never make up API endpoints or feature details not in the context.`;
+- Focus on practical, actionable guidance for developers.
+- If you genuinely don't know, say so and suggest checking official Salesforce documentation.
+- Never make up API endpoints or feature details not in the context.
+- Do not discuss internal Salesforce information, customer names, or roadmap details.`;
 
 export async function POST(request: NextRequest) {
   const { message, history } = await request.json();
@@ -90,12 +94,14 @@ function handleLocalChat(message: string, relevantSections: string[]) {
   if (relevantSections.length === 0) {
     return NextResponse.json({
       reply:
-        "I couldn't find specific information about that in the Document AI PRD. Could you rephrase your question? I'm knowledgeable about:\n\n" +
-        "- **Smart Page Processing Controls** (page limits, selection strategies, context windows)\n" +
-        "- **Configuration Versioning** (version control, rollback, comparison)\n" +
-        "- **Visual Citations** (bounding boxes, confidence overlay, annotated export)\n" +
-        "- **Document AI APIs** (extraction endpoint, authentication, supported models)\n" +
-        "- **Implementation timeline**, customer blockers, and competitive analysis",
+        "I couldn't find specific information about that. Could you rephrase your question? I'm knowledgeable about:\n\n" +
+        "- **Document AI Overview** (capabilities, use cases, supported formats)\n" +
+        "- **LLM Models** (Gemini, GPT-4o, Claude, model selection)\n" +
+        "- **REST API** (endpoints, authentication, request/response formats)\n" +
+        "- **Schema Design** (best practices, field types, table extraction)\n" +
+        "- **Confidence Scores** (interpretation, thresholds, quality monitoring)\n" +
+        "- **Integration** (Apex, Flows, Agentforce, Data Cloud)\n" +
+        "- **Error Handling** (troubleshooting, common issues)",
       source: "local",
     });
   }
@@ -112,27 +118,31 @@ function buildLocalAnswer(query: string, sections: string[]): string {
   const lower = query.toLowerCase();
 
   let intro = "";
-  if (lower.includes("feature 1") || lower.includes("page") || lower.includes("cost") || lower.includes("token") || lower.includes("context window")) {
-    intro = "Here's what I found about **Smart Page Processing Controls** (Feature 1):\n\n";
-  } else if (lower.includes("feature 2") || lower.includes("version") || lower.includes("rollback") || lower.includes("lifecycle")) {
-    intro = "Here's what I found about **Configuration Lifecycle Management** (Feature 2):\n\n";
-  } else if (lower.includes("feature 3") || lower.includes("visual") || lower.includes("bounding") || lower.includes("citation") || lower.includes("confidence") || lower.includes("overlay")) {
-    intro = "Here's what I found about **Visual Citations with Confidence Overlay** (Feature 3):\n\n";
-  } else if (lower.includes("api") || lower.includes("endpoint")) {
-    intro = "Here's the API information I found:\n\n";
-  } else if (lower.includes("timeline") || lower.includes("phase") || lower.includes("implementation") || lower.includes("resource")) {
-    intro = "Here's the implementation timeline information:\n\n";
-  } else if (lower.includes("customer") || lower.includes("blocker") || lower.includes("beta")) {
-    intro = "Here's the customer/blocker information:\n\n";
-  } else if (lower.includes("risk")) {
-    intro = "Here's the risk assessment:\n\n";
-  } else if (lower.includes("compet")) {
-    intro = "Here's the competitive analysis:\n\n";
+  if (lower.includes("model") || lower.includes("gemini") || lower.includes("gpt") || lower.includes("claude")) {
+    intro = "Here's what I found about **LLM Models**:\n\n";
+  } else if (lower.includes("api") || lower.includes("endpoint") || lower.includes("rest")) {
+    intro = "Here's the **API information** I found:\n\n";
+  } else if (lower.includes("auth") || lower.includes("oauth") || lower.includes("token") || lower.includes("pkce")) {
+    intro = "Here's what I found about **Authentication**:\n\n";
+  } else if (lower.includes("schema") || lower.includes("field") || lower.includes("design")) {
+    intro = "Here's what I found about **Schema Design**:\n\n";
+  } else if (lower.includes("confidence") || lower.includes("score") || lower.includes("accuracy")) {
+    intro = "Here's what I found about **Confidence Scores**:\n\n";
+  } else if (lower.includes("error") || lower.includes("troubleshoot") || lower.includes("debug") || lower.includes("issue")) {
+    intro = "Here's what I found about **Error Handling and Troubleshooting**:\n\n";
+  } else if (lower.includes("integration") || lower.includes("apex") || lower.includes("flow") || lower.includes("agent")) {
+    intro = "Here's what I found about **Salesforce Integration**:\n\n";
+  } else if (lower.includes("file") || lower.includes("format") || lower.includes("pdf") || lower.includes("limit")) {
+    intro = "Here's what I found about **File Types and Limits**:\n\n";
+  } else if (lower.includes("start") || lower.includes("setup") || lower.includes("begin") || lower.includes("getting")) {
+    intro = "Here's what I found about **Getting Started**:\n\n";
+  } else if (lower.includes("use case") || lower.includes("example") || lower.includes("invoice") || lower.includes("resume")) {
+    intro = "Here's what I found about **Use Cases and Examples**:\n\n";
   } else {
     intro = "Here's what I found:\n\n";
   }
 
   const content = sections.slice(0, 2).join("\n\n---\n\n");
 
-  return intro + content + "\n\n*This answer is from the Document AI PRD. For AI-powered answers, set the `OPENAI_API_KEY` environment variable.*";
+  return intro + content + "\n\n*This answer is from the Document AI knowledge base. For AI-powered answers with conversation context, set the `OPENAI_API_KEY` environment variable.*";
 }

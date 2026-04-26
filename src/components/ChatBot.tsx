@@ -8,11 +8,11 @@ interface Message {
 }
 
 const SUGGESTIONS = [
-  "What are the 3 new features in the 262 release?",
-  "How does page processing control work?",
-  "Explain the versioning rollback process",
+  "What is Document AI and what can it do?",
+  "How do I authenticate with Document AI API?",
   "What LLM models does Document AI support?",
-  "Which customers are blocked and why?",
+  "How do confidence scores work?",
+  "What are schema design best practices?",
 ];
 
 export default function ChatBot() {
@@ -137,7 +137,7 @@ export default function ChatBot() {
             {messages.length === 0 && (
               <div>
                 <p className="text-sm text-gray-500 mb-3">
-                  Hi! I can answer questions about Salesforce Document AI and the upcoming 262 Release features. Try asking:
+                  Hi! I can answer questions about Salesforce Document AI features, APIs, and implementation. Try asking:
                 </p>
                 <div className="space-y-1.5">
                   {SUGGESTIONS.map((s) => (
