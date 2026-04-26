@@ -134,16 +134,29 @@ export default function ExtractPage() {
   };
 
   const startAuth = async () => {
-    const clientId = DEFAULT_CLIENT_ID || prompt("Enter your Salesforce Connected App Client ID:");
+    setError(""); // Clear any previous errors
 
+    let clientId = DEFAULT_CLIENT_ID;
+
+    // If no environment variable, check localStorage first
     if (!clientId) {
-      setError("Client ID is required. Please set NEXT_PUBLIC_SF_CLIENT_ID environment variable or enter it when prompted.");
+      const savedClientId = localStorage.getItem("docai_client_id");
+      if (savedClientId) {
+        clientId = savedClientId;
+      } else {
+        // Prompt user for Client ID
+        clientId = prompt("Enter your Salesforce Connected App Client ID:") || "";
+      }
+    }
+
+    if (!clientId || clientId.trim() === "") {
+      setError("Client ID is required. Please enter your Salesforce Connected App Client ID to continue.");
       return;
     }
 
     const { verifier, challenge } = await generatePKCE();
     localStorage.setItem("docai_pkce_verifier", verifier);
-    localStorage.setItem("docai_client_id", clientId);
+    localStorage.setItem("docai_client_id", clientId); // Save for future use
 
     const redirectUri = window.location.origin + "/auth/callback";
     const authUrl =
@@ -156,7 +169,6 @@ export default function ExtractPage() {
       `&scope=api cdp_api refresh_token`;
 
     setAuthLoading(true);
-    setError("");
 
     const w = 600, h = 700;
     const left = window.screenX + (window.outerWidth - w) / 2;
@@ -388,16 +400,34 @@ export default function ExtractPage() {
                   </svg>
                   First time setup?
                 </p>
-                <p className="text-xs text-blue-800 leading-relaxed">
+                <p className="text-xs text-blue-800 leading-relaxed mb-2">
                   You'll need a Salesforce org with Data Cloud and Einstein AI enabled.
-                  If you don't have a Connected App set up, <Link href="#setup-guide" className="underline font-medium">follow our quick setup guide</Link>.
+                  If you don't have a Connected App set up, <Link href="#setup-guide" className="underline font-medium">follow our quick setup guide below</Link>.
+                </p>
+                <p className="text-xs text-blue-800 leading-relaxed">
+                  When you click the button above, you'll be asked to enter your <strong>Client ID</strong> from your External Client App.
                 </p>
               </div>
             </div>
 
-            <p className="text-xs text-gray-500 mt-6">
-              Secure OAuth 2.0 authentication • Your credentials never touch our servers
-            </p>
+            <div className="mt-6">
+              <p className="text-xs text-gray-500 text-center">
+                Secure OAuth 2.0 authentication • Your credentials never touch our servers
+              </p>
+              {typeof window !== 'undefined' && localStorage.getItem("docai_client_id") && (
+                <button
+                  onClick={() => {
+                    if (confirm("Clear saved Client ID? You'll need to enter it again next time.")) {
+                      localStorage.removeItem("docai_client_id");
+                      setError("");
+                    }
+                  }}
+                  className="text-xs text-gray-400 hover:text-gray-600 underline mt-2 mx-auto block"
+                >
+                  Change Client ID
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
